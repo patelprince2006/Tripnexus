@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification - TripNexus</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #0d2137 0%, #1a3a52 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 30px;
+        }
+        .content h2 {
+            color: #0d2137;
+            font-size: 20px;
+            margin: 0 0 20px 0;
+        }
+        .content p {
+            color: #555;
+            line-height: 1.6;
+            margin: 15px 0;
+        }
+        .code-box {
+            background-color: #f0f0f0;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 25px 0;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .code-box .code {
+            font-size: 36px;
+            font-weight: bold;
+            color: #0d2137;
+            letter-spacing: 5px;
+            margin: 0;
+        }
+        .footer {
+            background-color: #f9f9f9;
+            padding: 20px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            border-top: 1px solid #eee;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #ffc107;
+            color: #000;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .warning {
+            color: #e74c3c;
+            font-size: 14px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Trip<span style="color: #ffc107;">Nexus</span></h1>
+            <p>Email Verification</p>
+        </div>
+
+        <div class="content">
+            <h2>Welcome to TripNexus!</h2>
+            
+            <p>Thank you for signing up. To complete your registration and secure your account, please verify your email address.</p>
+
+            <p><strong>Your verification code is:</strong></p>
+            
+            <div class="code-box">
+                <p class="code">{{verification_code}}</p>
+            </div>
+
+            <p>Enter this code in the verification page to confirm your email address.</p>
+
+            <p class="warning">
+                <strong>⏱️ Important:</strong> This code will expire in {{expiry_minutes}} minutes.
+            </p>
+
+            <p>If you didn't sign up for a TripNexus account, you can safely ignore this email.</p>
+
+            <p>
+                <strong>Need help?</strong> Contact our support team at support@tripnexus.com
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2026 TripNexus. All rights reserved.</p>
+            <p>TripNexus - Your Travel Companion</p>
+            <p>This is an automated email. Please do not reply to this message.</p>
+        </div>
+    </div>
+</body>
+</html>
