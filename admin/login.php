@@ -16,26 +16,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($username) || empty($password)) {
         $error = "Please enter both username and password.";
     } else {
-        // Query database
-        $query = "SELECT * FROM admins WHERE username = $1";
-        $result = pg_query_params($conn, $query, array($username));
-
-        if ($result && pg_num_rows($result) > 0) {
-            $admin = pg_fetch_assoc($result);
-            if (password_verify($password, $admin['password'])) {
-                // Successful login
-                $_SESSION['admin_logged_in'] = true;
-                $_SESSION['admin_id'] = $admin['id'];
-                $_SESSION['admin_username'] = $admin['username'];
-                $_SESSION['admin_role'] = $admin['role']; // 'superadmin' or 'admin'
-                
-                header("Location: dashboard.php");
-                exit();
-            } else {
-                $error = "Invalid password.";
-            }
+        // Check if admins table exists
+        $table_check = pg_query($conn, "SELECT to_regclass('admins')");
+        if (!$table_check || !pg_fetch_result($table_check, 0, 0)) {
+            // Auto-setup the admin database
+            include 'setup_admin_db.php';
+            echo "<div class='alert alert-success'>Admin database has been set up automatically. Please try logging in again.</div>";
+            exit();
         } else {
-            $error = "User not found.";
+            // Query database
+            $query = "SELECT * FROM admins WHERE username = $1";
+            $result = pg_query_params($conn, $query, array($username));
+
+            if (!$result) {
+                $error = "Database error occurred. Please try again later.";
+            } else if (pg_num_rows($result) > 0) {
+                $admin = pg_fetch_assoc($result);
+                if (password_verify($password, $admin['password'])) {
+                    // Successful login
+                    $_SESSION['admin_logged_in'] = true;
+                    $_SESSION['admin_id'] = $admin['id'];
+                    $_SESSION['admin_username'] = $admin['username'];
+                    $_SESSION['admin_role'] = $admin['role']; // 'superadmin' or 'admin'
+                    
+                    header("Location: dashboard.php");
+                    exit();
+                } else {
+                    $error = "Invalid password.";
+                }
+            } else {
+                $error = "User not found.";
+            }
         }
     }
 }
@@ -101,7 +112,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </form>
     
     <div class="text-center mt-3">
-        <a href="register.php" class="text-secondary small me-3">Create Admin Account</a>
         <a href="../index.php" class="text-secondary small">Back to Website</a>
     </div>
 </div>

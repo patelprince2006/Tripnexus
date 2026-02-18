@@ -5,8 +5,8 @@ include 'auth_check.php';
 // Fetch Statistics
 $users_count = pg_fetch_assoc(pg_query($conn, "SELECT COUNT(*) as c FROM users"))['c'];
 $bookings_count = pg_fetch_assoc(pg_query($conn, "SELECT COUNT(*) as c FROM bookings"))['c'];
-$revenue = pg_fetch_assoc(pg_query($conn, "SELECT SUM(total_amount) as s FROM bookings WHERE status = 'completed' OR status = 'confirmed'"))['s'];
-$flights_count = pg_fetch_assoc(pg_query($conn, "SELECT COUNT(*) as c FROM flights"))['c'];
+$revenue = pg_fetch_assoc(pg_query($conn, "SELECT SUM(amount) as s FROM payments WHERE payment_status = 'success'"))['s'];
+$hotels_count = pg_fetch_assoc(pg_query($conn, "SELECT COUNT(*) as c FROM hotels"))['c'];
 
 if (!$revenue) $revenue = 0;
 
@@ -64,16 +64,16 @@ include 'includes/sidebar.php';
             </div>
         </div>
 
-        <!-- Card 4: Flights -->
+        <!-- Card 4: Hotels -->
         <div class="col-md-3">
             <div class="card p-3 card-stat bg-danger text-white">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-uppercase mb-1">Total Flights</h6>
-                        <h3 class="mb-0"><?php echo $flights_count; ?></h3>
+                        <h6 class="text-uppercase mb-1">Total Hotels</h6>
+                        <h3 class="mb-0"><?php echo $hotels_count; ?></h3>
                     </div>
                     <div class="stat-icon">
-                        <i class="fas fa-plane"></i>
+                        <i class="fas fa-hotel"></i>
                     </div>
                 </div>
             </div>
@@ -81,28 +81,7 @@ include 'includes/sidebar.php';
     </div>
 
     <!-- Charts Section -->
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Monthly Bookings Overview</h6>
-                </div>
-                <div class="card-body">
-                    <canvas id="bookingsChart"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Revenue Source</h6>
-                </div>
-                <div class="card-body">
-                    <canvas id="revenueChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
+   
 
 </div>
 

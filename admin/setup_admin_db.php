@@ -16,15 +16,33 @@ CREATE TABLE IF NOT EXISTS admins (
 );
 ";
 $res = pg_query($conn, $sql_admins);
-if ($res) echo "Table 'admins' created.<br>"; else echo "Error creating 'admins': " . pg_last_error($conn) . "<br>";
+if ($res) {
+    echo "Table 'admins' created successfully.<br>";
+} else {
+    echo "Error creating 'admins' table: " . pg_last_error($conn) . "<br>";
+    // Try to check if table exists
+    $check_table = pg_query($conn, "SELECT to_regclass('admins')");
+    if ($check_table) {
+        $table_exists = pg_fetch_result($check_table, 0, 0);
+        if ($table_exists) {
+            echo "Table 'admins' already exists.<br>";
+        }
+    }
+}
 
 // Insert Default Admin (admin / admin123)
 $password = password_hash("admin123", PASSWORD_DEFAULT);
 $check_admin = pg_query($conn, "SELECT * FROM admins WHERE username = 'admin'");
-if (pg_num_rows($check_admin) == 0) {
+if ($check_admin && pg_num_rows($check_admin) == 0) {
     $insert_admin = "INSERT INTO admins (username, email, password, role) VALUES ('admin', 'admin@example.com', '$password', 'superadmin')";
-    pg_query($conn, $insert_admin);
-    echo "Default admin user created (admin / admin123).<br>";
+    $result = pg_query($conn, $insert_admin);
+    if ($result) {
+        echo "Default admin user created (admin / admin123).<br>";
+    } else {
+        echo "Error creating admin user: " . pg_last_error($conn) . "<br>";
+    }
+} else {
+    echo "Admin user already exists.<br>";
 }
 
 // 2. Update Users Table (Add status column)
