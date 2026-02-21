@@ -1,0 +1,232 @@
+/* --- GLOBAL STYLES --- */
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow-x: hidden;
+}
+
+/* --- NAVBAR SCROLL EFFECTS --- */
+.navbar {
+    transition: background-color 0.4s ease, padding 0.4s ease;
+}
+
+.navbar-scrolled {
+    background-color: rgba(0, 0, 0, 0.9) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+}
+
+/* --- HERO SECTION --- */
+.hero {
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+        url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh;
+    width: 100%;
+}
+
+.hero .container {
+    padding-bottom: 60px;
+}
+
+/* --- SEARCH CONTAINER & TABS --- */
+.search-container {
+    max-width: 1150px;
+    position: relative;
+    z-index: 10;
+    margin-top: 50px;
+    padding: 0 15px;
+}
+
+.custom-tabs .nav-link {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 50px;
+    margin: 0 5px;
+    padding: 10px 25px;
+    backdrop-filter: blur(5px);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.custom-tabs .nav-link.active {
+    background-color: #ffffff !important;
+    color: #0d2137 !important;
+    font-weight: bold;
+}
+
+/* --- HORIZONTAL SEARCH BAR --- */
+.modern-search-wrapper {
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.modern-search-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    min-height: 100px;
+    padding: 10px;
+}
+
+.search-input-group {
+    flex: 1;
+    position: relative;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 10px 15px;
+}
+
+.search-input-group:hover {
+    background-color: #f8f9fa;
+}
+
+.search-input-group.border-end {
+    border-right: 1px solid #dee2e6 !important;
+}
+
+.search-input-group label {
+    margin-bottom: 2px;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+.search-input-group input {
+    outline: none;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0d2137;
+    background: transparent;
+    border: none;
+    width: 100%;
+}
+
+.search-input-group input::placeholder {
+    font-weight: 500;
+    color: #adb5bd;
+}
+
+/* --- SWAP BUTTON --- */
+.search-swap-btn {
+    z-index: 10;
+    margin: 0 -15px;
+}
+
+.search-swap-btn button {
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.search-swap-btn button:hover {
+    transform: rotate(180deg);
+}
+
+/* --- BUTTONS --- */
+.btn-search {
+    min-width: 140px;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+.btn-search:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn-navy {
+    background-color: #0d2137;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-navy:hover {
+    background-color: #1a3a5a;
+    transform: translateY(-2px);
+    color: white;
+}
+
+/* --- CARD ANIMATIONS --- */
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important;
+    z-index: 1;
+    cursor: pointer;
+}
+
+/* --- CONTACT SECTION --- */
+.contact-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.contact-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* --- AUTH PAGES (Login/Register) --- */
+.auth-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.auth-card .form-control {
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.btn-auth {
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: bold;
+}
+
+/* --- RESPONSIVE ADJUSTMENTS --- */
+@media (max-width: 991px) {
+    .modern-search-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .search-input-group {
+        border-right: none !important;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 15px;
+        margin-bottom: 10px;
+    }
+
+    .search-swap-btn {
+        margin: -20px auto 10px;
+        transform: rotate(90deg);
+    }
+
+    .btn-search {
+        width: 100%;
+        margin-left: 0 !important;
+        margin-top: 15px;
+    }
+}
