@@ -108,8 +108,8 @@ if ($unreadQuery) {
                 <div class="list-group shadow-sm border-0">
                     <a href="#" class="list-group-item list-group-item-action active"><i class="bi bi-grid-1x2-fill me-2"></i> Overview</a>
                     <a href="my_booking_standlone.php" class="list-group-item list-group-item-action"><i class="bi bi-ticket-perforated me-2"></i> My Bookings</a>
-                    <a href="#" class="list-group-item list-group-item-action"><i class="bi bi-heart me-2"></i> Wishlist</a>
-                    <a href="#" class="list-group-item list-group-item-action"><i class="bi bi-gear me-2"></i> Settings</a>
+                    <a href="wishlist.php" class="list-group-item list-group-item-action"><i class="bi bi-heart me-2"></i> Wishlist</a>
+                    <a href="settings.php" class="list-group-item list-group-item-action"><i class="bi bi-gear me-2"></i> Settings</a>
                 </div>
             </div>
 

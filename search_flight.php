@@ -157,9 +157,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <button class="btn btn-outline-secondary btn-sm px-3 rounded-pill">
                                         <i class="bi bi-heart"></i>
                                     </button>
-                                    <button class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm">
-                                        Book Now <i class="bi bi-chevron-right small"></i>
-                                    </button>
+                                    <form action="booking.php" method="POST">
+                                        <input type="hidden" name="service_type" value="flight">
+                                        <input type="hidden" name="reference_id" value="<?php echo $flight['flight_id']; ?>">
+                                        <input type="hidden" name="amount" value="<?php echo $flight['base_price']; ?>">
+                                        <input type="hidden" name="travel_date" value="<?php echo $travel_date; ?>">
+                                        <input type="hidden" name="item_name" value="<?php echo $flight['airline_name']; ?>">
+                                        <button type="submit" class="btn btn-warning fw-bold rounded-pill px-4">Book Now</button>
+                                    </form>
                                 </div>
                             </div>
                         </div>

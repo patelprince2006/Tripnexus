@@ -21,7 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 // Fetch Past Notifications
-$result = pg_query($conn, "SELECT * FROM notifications ORDER BY sent_at DESC LIMIT 10");
+$result = pg_query($conn, "SELECT n.*, u.id as user_id, u.fullname 
+          FROM notifications n 
+          LEFT JOIN users u ON n.user_id = u.id 
+          ORDER BY n.created_at DESC");
 
 $active_page = 'notifications';
 include 'includes/header.php';
@@ -76,6 +79,7 @@ include 'includes/sidebar.php';
                     <table class="table table-striped mb-0">
                         <thead>
                             <tr>
+                                <th>User ID</th>
                                 <th>Title</th>
                                 <th>Type</th>
                                 <th>Date</th>
@@ -84,9 +88,10 @@ include 'includes/sidebar.php';
                         <tbody>
                             <?php while ($row = pg_fetch_assoc($result)): ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($row['title']); ?></td>
+                                <td><?php echo htmlspecialchars($row['user_id']); ?></td>
+                                <td><?php echo htmlspecialchars($row['title'] ?? $row['subject'] ?? 'No Title'); ?></td>
                                 <td><span class="badge bg-info text-dark"><?php echo $row['type']; ?></span></td>
-                                <td><?php echo date('d M Y', strtotime($row['sent_at'])); ?></td>
+                                <td><?php echo date('d M Y', strtotime($row['created_at'])); ?></td>
                             </tr>
                             <?php endwhile; ?>
                         </tbody>
