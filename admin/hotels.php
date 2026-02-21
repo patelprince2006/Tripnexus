@@ -2,6 +2,20 @@
 include '../db.php';
 include 'auth_check.php';
 
+// Self-repair: Ensure required columns exist
+$check_cols = pg_query($conn, "SELECT column_name FROM information_schema.columns WHERE table_name='hotels'");
+$existing_cols = [];
+while ($row = pg_fetch_assoc($check_cols)) {
+    $existing_cols[] = $row['column_name'];
+}
+
+if (!in_array('description', $existing_cols)) {
+    pg_query($conn, "ALTER TABLE hotels ADD COLUMN description TEXT");
+}
+if (!in_array('main_image', $existing_cols)) {
+    pg_query($conn, "ALTER TABLE hotels ADD COLUMN main_image TEXT");
+}
+
 $msg = '';
 
 // Handle Add/Edit/Delete
@@ -10,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     
     if ($action == 'delete') {
         $id = intval($_POST['hotel_id']);
-        pg_query_params($conn, "DELETE FROM hotels WHERE id = $1", array($id));
+        pg_query_params($conn, "DELETE FROM hotels WHERE hotel_id = $1", array($id));
         $msg = "Hotel deleted!";
     } elseif ($action == 'save') {
         $name = $_POST['name'];
@@ -23,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
         $id = isset($_POST['hotel_id']) ? $_POST['hotel_id'] : '';
 
         if ($id) {
-            $sql = "UPDATE hotels SET name=$1, city=$2, address=$3, description=$4, price_per_night=$5, rating=$6, main_image=$7 WHERE id=$8";
+            $sql = "UPDATE hotels SET name=$1, city=$2, address=$3, description=$4, price_per_night=$5, rating=$6, main_image=$7 WHERE hotel_id=$8";
             pg_query_params($conn, $sql, array($name, $city, $address, $desc, $price, $rating, $image, $id));
             $msg = "Hotel updated!";
         } else {
@@ -35,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
 }
 
 // Fetch Hotels
-$result = pg_query($conn, "SELECT * FROM hotels ORDER BY id DESC");
+$result = pg_query($conn, "SELECT * FROM hotels ORDER BY hotel_id DESC");
 
 $active_page = 'hotels';
 include 'includes/header.php';
@@ -69,7 +83,7 @@ include 'includes/sidebar.php';
             <tbody>
                 <?php while ($row = pg_fetch_assoc($result)): ?>
                 <tr>
-                    <td><img src="<?php echo $row['main_image'] ? $row['main_image'] : 'https://placehold.co/50'; ?>" width="50" class="rounded"></td>
+                    <td><img src="<?php echo $row['main_image'] ? $row['main_image'] : 'photo/goa_hotel.png'; ?>" width="50" class="rounded"></td>
                     <td><?php echo htmlspecialchars($row['name']); ?></td>
                     <td><?php echo htmlspecialchars($row['city']); ?></td>
                     <td>₹<?php echo $row['price_per_night']; ?></td>
@@ -80,7 +94,7 @@ include 'includes/sidebar.php';
                         </button>
                         <form method="POST" class="d-inline" onsubmit="return confirm('Delete this hotel?');">
                             <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="hotel_id" value="<?php echo $row['id']; ?>">
+                            <input type="hidden" name="hotel_id" value="<?php echo $row['hotel_id']; ?>">
                             <button class="btn btn-sm btn-danger btn-action"><i class="fas fa-trash"></i></button>
                         </form>
                     </td>
@@ -149,7 +163,7 @@ include 'includes/sidebar.php';
 <script>
 function editHotel(data) {
     document.getElementById('modalTitle').innerText = 'Edit Hotel';
-    document.getElementById('hotel_id').value = data.id;
+    document.getElementById('hotel_id').value = data.hotel_id;
     document.getElementById('name').value = data.name;
     document.getElementById('city').value = data.city;
     document.getElementById('address').value = data.address;

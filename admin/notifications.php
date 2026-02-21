@@ -21,7 +21,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 // Fetch Past Notifications
-$result = pg_query($conn, "SELECT * FROM notifications ORDER BY sent_at DESC LIMIT 10");
+$result = pg_query($conn, "SELECT * FROM notifications ORDER BY (CASE WHEN (SELECT 1 FROM information_schema.columns WHERE table_name='notifications' AND column_name='sent_at') IS NOT NULL THEN sent_at ELSE created_at END) DESC LIMIT 10");
+
+if (!$result) {
+    // Second attempt fallback if the ABOVE complex query fails for some reason
+    $result = pg_query($conn, "SELECT * FROM notifications ORDER BY id DESC LIMIT 10");
+}
 
 $active_page = 'notifications';
 include 'includes/header.php';
@@ -82,13 +87,20 @@ include 'includes/sidebar.php';
                             </tr>
                         </thead>
                         <tbody>
-                            <?php while ($row = pg_fetch_assoc($result)): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($row['title']); ?></td>
-                                <td><span class="badge bg-info text-dark"><?php echo $row['type']; ?></span></td>
-                                <td><?php echo date('d M Y', strtotime($row['sent_at'])); ?></td>
-                            </tr>
-                            <?php endwhile; ?>
+                            <?php if ($result): ?>
+                                <?php while ($row = pg_fetch_assoc($result)): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars(isset($row['title']) ? $row['title'] : (isset($row['subject']) ? $row['subject'] : 'No Title')); ?></td>
+                                    <td><span class="badge bg-info text-dark"><?php echo $row['type']; ?></span></td>
+                                    <td><?php 
+                                        $date_col = isset($row['sent_at']) ? $row['sent_at'] : (isset($row['created_at']) ? $row['created_at'] : null);
+                                        echo $date_col ? date('d M Y', strtotime($date_col)) : 'N/A'; 
+                                    ?></td>
+                                </tr>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr><td colspan="3" class="text-center text-muted">No notifications found or table schema mismatch.</td></tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
