@@ -170,6 +170,7 @@
 
                     <!-- Bus Search -->
                     <div class="tab-pane fade" id="pills-bus" role="tabpanel">
+<<<<<<< HEAD
                         <div class="modern-search-wrapper shadow-lg">
                             <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
                                 <span class="badge bg-light text-dark border"><i class="bi bi-check-circle-fill text-success me-1"></i>AC / Non-AC</span>
@@ -196,10 +197,78 @@
                                 </button>
                             </div>
                         </div>
+=======
+                        <form method="POST" action="search_bus.php">
+                            <div class="modern-search-wrapper shadow-lg">
+                                <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="trip_type" id="busOneWay" value="oneWay" checked>
+                                        <label class="form-check-label" for="busOneWay">One Way</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="trip_type" id="busRoundTrip" value="roundTrip">
+                                        <label class="form-check-label" for="busRoundTrip">Round Trip</label>
+                                    </div>
+                                </div>
+
+                                <div class="modern-search-bar p-2 d-flex align-items-center">
+                                    <div class="search-input-group border-end flex-grow-1 px-3 py-2">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1">
+                                            <i class="bi bi-bus-front-fill text-danger me-1"></i>From
+                                        </label>
+                                        <select name="bus_from" id="busFrom" class="border-0 w-100 fw-bold" style="background: none;" required>
+                                            <option value="">Select</option>
+                                            <option value="Bangalore">Bangalore</option>
+                                            <option value="Hyderabad">Hyderabad</option>
+                                            <option value="Chennai">Chennai</option>
+                                            <option value="Mumbai">Mumbai</option>
+                                            <option value="Pune">Pune</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="search-swap-btn">
+                                        <button type="button" class="btn btn-light rounded-circle shadow-sm border" onclick="swapBusLocations()">
+                                            <i class="bi bi-arrow-left-right text-danger"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="search-input-group border-end flex-grow-1 px-3 py-2">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1">
+                                            <i class="bi bi-geo-alt-fill text-danger me-1"></i>To
+                                        </label>
+                                        <select name="bus_to" id="busTo" class="border-0 w-100 fw-bold" style="background: none;" required>
+                                            <option value="">Select</option>
+                                            <option value="Hyderabad">Hyderabad</option>
+                                            <option value="Bangalore">Bangalore</option>
+                                            <option value="Chennai">Chennai</option>
+                                            <option value="Mumbai">Mumbai</option>
+                                            <option value="Pune">Pune</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="search-input-group border-end px-3 py-2" style="min-width: 150px;">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1">Departure</label>
+                                        <input type="date" name="bus_date" class="border-0 w-100 fw-bold" style="background: none;" required>
+                                    </div>
+                                    
+
+                                    <div class="search-input-group px-3 py-2" style="min-width: 150px;">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1">Return</label>
+                                        <input type="date" name="return_date" class="border-0 w-100 fw-bold" style="background: none;">
+                                    </div>
+
+                                    <button type="submit" class="btn btn-danger btn-search rounded-pill px-4 py-3 ms-2 fw-bold text-white shadow-lg">
+                                        Search Bus
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+>>>>>>> origin
                     </div>
 
                     <!-- Train Search -->
                     <div class="tab-pane fade" id="pills-train" role="tabpanel">
+<<<<<<< HEAD
                         <div class="modern-search-wrapper shadow-lg">
                             <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
                                 <span><i class="bi bi-info-circle"></i> PNR Status</span>
@@ -226,10 +295,48 @@
                                 </button>
                             </div>
                         </div>
+=======
+                        <form method="POST" action="search_train.php">
+                            <div class="modern-search-wrapper shadow-lg">
+                                <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
+                                    <span><i class="bi bi-info-circle"></i> PNR Status</span>
+                                    <span><i class="bi bi-info-circle"></i> Live Train Status</span>
+                                </div>
+                                <div class="modern-search-bar p-2 d-flex flex-wrap align-items-center">
+                                    <div class="search-input-group border-end flex-grow-1 px-3 py-2">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-train-front-fill text-info me-1"></i>From Station</label>
+                                        <select name="train_from" class="border-0 w-100 fw-bold" style="background: none;" required>
+                                            <option value="">Select</option>
+                                            <option value="Chennai">Chennai</option>
+                                        </select>
+                                        <div class="small text-muted">MAS</div>
+                                    </div>
+                                    <div class="search-input-group border-end flex-grow-1 px-3 py-2">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-geo-alt-fill text-info me-1"></i>To Station</label>
+                                        <select name="train_to" class="border-0 w-100 fw-bold" style="background: none;" required>
+                                            <option value="">Select</option>
+                                            <option value="Delhi">Delhi</option>
+                                            <option value="Mysore">Mysore</option>
+                                        </select>
+                                        <div class="small text-muted">CBE</div>
+                                    </div>
+                                    <div class="search-input-group px-3 py-2" style="min-width: 200px;">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-calendar-event text-info me-1"></i>Journey Date</label>
+                                        <input type="date" name="train_date" class="border-0 w-100 fw-bold" required>
+                                        <!-- <div class="small text-muted">Select Date</div> -->
+                                    </div>
+                                    <button type="submit" class="btn btn-info btn-search rounded-pill px-5 py-3 ms-2 fw-bold text-white shadow-lg">
+                                        Search Train
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+>>>>>>> origin
                     </div>
 
                     <!-- Hotel Search -->
                     <div class="tab-pane fade" id="pills-hotels" role="tabpanel">
+<<<<<<< HEAD
                         <div class="modern-search-wrapper shadow-lg">
                             <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
                                 <span><i class="bi bi-star-fill text-warning"></i> 5-Star</span>
@@ -259,6 +366,44 @@
                                 </button>
                             </div>
                         </div>
+=======
+                        <form method="POST" action="search_hotel.php">
+                            <div class="modern-search-wrapper shadow-lg">
+                                <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
+                                    <span><i class="bi bi-star-fill text-warning"></i> 5-Star</span>
+                                    <span><i class="bi bi-star-fill text-warning"></i> Villas</span>
+                                    <span><i class="bi bi-star-fill text-warning"></i> Resorts</span>
+                                </div>
+                                <div class="modern-search-bar p-2 d-flex flex-wrap align-items-center">
+                                    <div class="search-input-group border-end flex-grow-1 px-3 py-2">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-building-fill text-warning me-1"></i>City / Hotel</label>
+                                        <select name="hotel_city" class="border-0 w-100 fw-bold" style="background: none;" required>
+                                            <option value="">Select</option>
+                                            <option value="Mumbai">Mumbai</option>
+                                            <option value="Delhi">Delhi</option>
+                                            <option value="Goa">Goa</option>
+                                        </select>
+                                        <div class="small text-muted">Search by city or hotel name</div>
+                                    </div>
+                                    <div class="search-input-group border-end px-3 py-2" style="min-width: 140px;">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-calendar-check text-warning me-1"></i>Check-in</label>
+                                        <input type="date" name="check_in" class="border-0 w-100 fw-bold" required>
+                                    </div>
+                                    <div class="search-input-group border-end px-3 py-2" style="min-width: 140px;">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-calendar-x text-warning me-1"></i>Check-out</label>
+                                        <input type="date" name="check_out" class="border-0 w-100 fw-bold" required>
+                                    </div>
+                                    <div class="search-input-group px-3 py-2" style="min-width: 150px;">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-people-fill text-warning me-1"></i>Guests</label>
+                                        <input type="text" name="guests" class="border-0 w-100 fw-bold" placeholder="2 Guests, 1 Room">
+                                    </div>
+                                    <button type="submit" class="btn btn-warning btn-search rounded-pill px-4 py-3 ms-2 fw-bold text-dark shadow-lg">
+                                        Search Hotels
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+>>>>>>> origin
                     </div>
                 </div>
             </div>
