@@ -10,13 +10,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $type = $_POST['type'];
 
     if ($title && $message) {
-        // Save to DB
-        $sql = "INSERT INTO notifications (title, message, type) VALUES ($1, $2, $3)";
-        pg_query_params($conn, $sql, array($title, $message, $type));
+        // Send notification to ALL users
+        $users_result = pg_query($conn, "SELECT id FROM users");
         
-        // TODO: In a real app, you might loop through users and send emails here.
-        
-        $msg = "Notification sent successfully!";
+        if (!$users_result) {
+            $msg = "Error fetching users: " . pg_last_error($conn);
+        } else {
+            $sent_count = 0;
+            $total_users = pg_num_rows($users_result);
+            
+            // Loop through all users and send notification to each one
+            while ($user_row = pg_fetch_assoc($users_result)) {
+                $user_id = $user_row['id'];
+                
+                // Insert notification for this specific user
+                $sql = "INSERT INTO notifications (subject, message, type, user_id, is_read) VALUES ($1, $2, $3, $4, $5)";
+                $insert_result = pg_query_params($conn, $sql, array($title, $message, $type, $user_id, 'false'));
+                
+                if ($insert_result) {
+                    $sent_count++;
+                } else {
+                    $msg = "Error sending to user $user_id: " . pg_last_error($conn);
+                    break;
+                }
+            }
+            
+            if (empty($msg)) {
+                $msg = "✅ Notification sent successfully to all $sent_count users!";
+            }
+        }
     }
 }
 

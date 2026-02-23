@@ -76,16 +76,17 @@ if ($unreadQuery) {
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            <div class="collapse navbar-collapse" id="navMenu">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php">Home</a>
-                    </li>
-                </ul>
+            <div class="d-flex align-items-center gap-3" id="navMenu">
+                
                 <div class="d-flex align-items-center gap-3">
                     <span class="text-white small d-none d-sm-inline">
                         Welcome, <?php echo htmlspecialchars($fullname); ?>!
                     </span>
+                    <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-outline-light rounded-pill px-3" href="index.php">Home</a>
+                    </li>
+                </ul>
                     <a href="logout.php" class="btn btn-sm btn-outline-danger rounded-pill px-3">Logout</a>
                 </div>
             </div>

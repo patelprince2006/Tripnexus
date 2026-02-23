@@ -21,6 +21,54 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* LOGIN PAGE ONLY */
+        .login-hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+                url('photos/Horseconch.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Glass effect only for login */
+        .login-hero .auth-card {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            color: white;
+        }
+
+        /* Inputs styling */
+        .login-hero .form-control {
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+        }
+
+        .login-hero .form-label {
+            color: #eee;
+        }
+
+        /* Button */
+        .login-hero .btn-navy {
+            background: #2d7ef7;
+            border: none;
+        }
+
+        .login-hero .btn-navy:hover {
+            background: #1a5edb;
+        }
+
+        /* Links */
+        .login-hero a {
+            color: #fff;
+        }
+
+        /* Heading */
+        .login-hero h3 {
+            color: white !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -57,7 +105,7 @@
                     <div class="dropdown">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <div class="me-2 text-end d-none d-sm-block">
-                               Welcome,<span class="fw-bold"><?php echo htmlspecialchars($_SESSION['fullname']); ?></span>
+                                Welcome,<span class="fw-bold"><?php echo htmlspecialchars($_SESSION['fullname']); ?></span>
                             </div>
                             <div class="rounded-circle bg-whi d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
                                 <i class="bi bi-person-fill text-dark fs-5"></i>
@@ -128,13 +176,13 @@
                                             <option value="COK">Kochi (COK)</option>
                                         </select>
                                     </div>
-                                    
+
                                     <div class="search-swap-btn">
                                         <button type="button" class="btn btn-light rounded-circle shadow-sm border" onclick="swapLocations()">
                                             <i class="bi bi-arrow-left-right text-primary"></i>
                                         </button>
                                     </div>
-                                    
+
                                     <div class="search-input-group border-end flex-grow-1 px-3 py-2">
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1">
                                             <i class="bi bi-geo-alt-fill text-primary me-1"></i>To
@@ -197,13 +245,13 @@
                                             <option value="Pune">Pune</option>
                                         </select>
                                     </div>
-                                    
+
                                     <div class="search-swap-btn">
                                         <button type="button" class="btn btn-light rounded-circle shadow-sm border" onclick="swapBusLocations()">
                                             <i class="bi bi-arrow-left-right text-danger"></i>
                                         </button>
                                     </div>
-                                    
+
                                     <div class="search-input-group border-end flex-grow-1 px-3 py-2">
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1">
                                             <i class="bi bi-geo-alt-fill text-danger me-1"></i>To
@@ -222,7 +270,7 @@
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1">Departure</label>
                                         <input type="date" name="bus_date" class="border-0 w-100 fw-bold" style="background: none;" required>
                                     </div>
-                                    
+
 
                                     <div class="search-input-group px-3 py-2" style="min-width: 150px;">
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1">Return</label>

@@ -22,9 +22,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
         $image = $_POST['main_image'];
         $id = isset($_POST['hotel_id']) ? $_POST['hotel_id'] : '';
 
-        if ($id) {
+        // Debug: Check if hotel_id is "undefined"
+        if ($id === 'undefined') {
+            $id = '';
+        }
+
+        if ($id && is_numeric($id)) {
             $sql = "UPDATE hotels SET name=$1, city=$2, address=$3, description=$4, price_per_night=$5, rating=$6, main_image=$7 WHERE hotel_id=$8";
-            pg_query_params($conn, $sql, array($name, $city, $address, $desc, $price, $rating, $image, $id));
+            pg_query_params($conn, $sql, array($name, $city, $address, $desc, $price, $rating, $image, intval($id)));
             $msg = "Hotel updated!";
         } else {
             $sql = "INSERT INTO hotels (name, city, address, description, price_per_night, rating, main_image) VALUES ($1, $2, $3, $4, $5, $6, $7)";
@@ -35,9 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
 }
 
 // Fetch Hotels
-$query = "SELECT * FROM hotels ORDER BY hotel_id DESC";
-
-$result = pg_query($conn, $query);
+$result = pg_query($conn, "SELECT * FROM hotels ORDER BY hotel_id DESC");
 
 if (!$result) {
     die("Error in query: " . pg_last_error($conn));
@@ -155,7 +158,7 @@ include 'includes/sidebar.php';
 <script>
 function editHotel(data) {
     document.getElementById('modalTitle').innerText = 'Edit Hotel';
-    document.getElementById('hotel_id').value = data.id;
+    document.getElementById('hotel_id').value = data.hotel_id;
     document.getElementById('name').value = data.name;
     document.getElementById('city').value = data.city;
     document.getElementById('address').value = data.address;
