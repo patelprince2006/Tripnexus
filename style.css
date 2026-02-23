@@ -22,13 +22,16 @@ body {
 
 /* --- HERO SECTION --- */
 .hero {
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-        url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop');
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+                url('photos/Homepage-Background.avif'); 
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    height: 100vh;
+    background-attachment: fixed; /* Keeps background steady during scroll */
+    min-height: 100vh; /* Changed from height to min-height for better mobile scaling */
     width: 100%;
+    display: flex;
+    align-items: center;
 }
 
 .hero .container {
@@ -228,5 +231,19 @@ body {
         width: 100%;
         margin-left: 0 !important;
         margin-top: 15px;
+    }
+
+    .hero {
+        padding: 80px 0; 
+        height: auto;
+    }
+
+    .auth-card {
+        margin: 20px; 
+    }
+
+    .display-4 {
+        font-size: 2.5rem; 
+        text-align: center;
     }
 }

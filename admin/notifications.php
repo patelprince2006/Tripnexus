@@ -10,18 +10,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $type = $_POST['type'];
 
     if ($title && $message) {
-        // Save to DB
-        $sql = "INSERT INTO notifications (title, message, type) VALUES ($1, $2, $3)";
-        pg_query_params($conn, $sql, array($title, $message, $type));
+        // Send notification to ALL users
+        $users_result = pg_query($conn, "SELECT id FROM users");
         
-        // TODO: In a real app, you might loop through users and send emails here.
-        
-        $msg = "Notification sent successfully!";
+        if (!$users_result) {
+            $msg = "Error fetching users: " . pg_last_error($conn);
+        } else {
+            $sent_count = 0;
+            $total_users = pg_num_rows($users_result);
+            
+            // Loop through all users and send notification to each one
+            while ($user_row = pg_fetch_assoc($users_result)) {
+                $user_id = $user_row['id'];
+                
+                // Insert notification for this specific user
+                $sql = "INSERT INTO notifications (subject, message, type, user_id, is_read) VALUES ($1, $2, $3, $4, $5)";
+                $insert_result = pg_query_params($conn, $sql, array($title, $message, $type, $user_id, 'false'));
+                
+                if ($insert_result) {
+                    $sent_count++;
+                } else {
+                    $msg = "Error sending to user $user_id: " . pg_last_error($conn);
+                    break;
+                }
+            }
+            
+            if (empty($msg)) {
+                $msg = "✅ Notification sent successfully to all $sent_count users!";
+            }
+        }
     }
 }
 
 // Fetch Past Notifications
-$result = pg_query($conn, "SELECT * FROM notifications ORDER BY sent_at DESC LIMIT 10");
+$result = pg_query($conn, "SELECT n.*, u.id as user_id, u.fullname 
+          FROM notifications n 
+          LEFT JOIN users u ON n.user_id = u.id 
+          ORDER BY n.created_at DESC");
 
 $active_page = 'notifications';
 include 'includes/header.php';
@@ -76,6 +101,7 @@ include 'includes/sidebar.php';
                     <table class="table table-striped mb-0">
                         <thead>
                             <tr>
+                                <th>User ID</th>
                                 <th>Title</th>
                                 <th>Type</th>
                                 <th>Date</th>
@@ -84,9 +110,10 @@ include 'includes/sidebar.php';
                         <tbody>
                             <?php while ($row = pg_fetch_assoc($result)): ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($row['title']); ?></td>
+                                <td><?php echo htmlspecialchars($row['user_id']); ?></td>
+                                <td><?php echo htmlspecialchars($row['title'] ?? $row['subject'] ?? 'No Title'); ?></td>
                                 <td><span class="badge bg-info text-dark"><?php echo $row['type']; ?></span></td>
-                                <td><?php echo date('d M Y', strtotime($row['sent_at'])); ?></td>
+                                <td><?php echo date('d M Y', strtotime($row['created_at'])); ?></td>
                             </tr>
                             <?php endwhile; ?>
                         </tbody>

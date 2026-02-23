@@ -76,16 +76,17 @@ if ($unreadQuery) {
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            <div class="collapse navbar-collapse" id="navMenu">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php">Home</a>
-                    </li>
-                </ul>
+            <div class="d-flex align-items-center gap-3" id="navMenu">
+                
                 <div class="d-flex align-items-center gap-3">
                     <span class="text-white small d-none d-sm-inline">
                         Welcome, <?php echo htmlspecialchars($fullname); ?>!
                     </span>
+                    <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-outline-light rounded-pill px-3" href="index.php">Home</a>
+                    </li>
+                </ul>
                     <a href="logout.php" class="btn btn-sm btn-outline-danger rounded-pill px-3">Logout</a>
                 </div>
             </div>
@@ -108,8 +109,8 @@ if ($unreadQuery) {
                 <div class="list-group shadow-sm border-0">
                     <a href="#" class="list-group-item list-group-item-action active"><i class="bi bi-grid-1x2-fill me-2"></i> Overview</a>
                     <a href="my_booking_standlone.php" class="list-group-item list-group-item-action"><i class="bi bi-ticket-perforated me-2"></i> My Bookings</a>
-                    <a href="#" class="list-group-item list-group-item-action"><i class="bi bi-heart me-2"></i> Wishlist</a>
-                    <a href="#" class="list-group-item list-group-item-action"><i class="bi bi-gear me-2"></i> Settings</a>
+                    <a href="wishlist.php" class="list-group-item list-group-item-action"><i class="bi bi-heart me-2"></i> Wishlist</a>
+                    <a href="settings.php" class="list-group-item list-group-item-action"><i class="bi bi-gear me-2"></i> Settings</a>
                 </div>
             </div>
 
