@@ -18,16 +18,22 @@ if (!$email) {
     exit();
 }
 
-// Find user by email
-$query = pg_prepare($conn, "find_user", 'SELECT id, fullname FROM users WHERE email = $1 AND is_verified = false');
-$result = pg_execute($conn, "find_user", array($email));
+// Check if database is connected
+if (!DB_CONNECTED) {
+    echo "<script>alert('Database connection failed. Please try again later.'); history.back();</script>";
+    exit();
+}
 
-if (pg_num_rows($result) === 0) {
+// Find user by email
+$query = db_prepare($conn, "find_user", 'SELECT id, fullname FROM users WHERE email = ? AND is_verified = false');
+$result = db_execute($conn, "find_user", array($email));
+
+if (!$result || db_num_rows($result) === 0) {
     echo "<script>alert('No unverified account found with this email'); history.back();</script>";
     exit();
 }
 
-$user = pg_fetch_assoc($result);
+$user = db_fetch_assoc($result);
 $userId = $user['id'];
 $fullname = $user['fullname'];
 
@@ -36,9 +42,9 @@ $verificationCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 $expiryTime = date('Y-m-d H:i:s', strtotime('+' . VERIFICATION_CODE_EXPIRY . ' minutes'));
 
 // Update verification code
-$updateQuery = pg_prepare($conn, "update_code", 
-    'UPDATE users SET verification_code = $1, verification_code_expiry = $2 WHERE id = $3');
-$updateResult = pg_execute($conn, "update_code", array($verificationCode, $expiryTime, $userId));
+$updateQuery = db_prepare($conn, "update_code", 
+    'UPDATE users SET verification_code = ?, verification_code_expiry = ? WHERE id = ?');
+$updateResult = db_execute($conn, "update_code", array($verificationCode, $expiryTime, $userId));
 
 if (!$updateResult) {
     echo "<script>alert('Error updating verification code'); history.back();</script>";
@@ -64,5 +70,7 @@ if ($emailSent) {
     echo "<script>alert('Failed to send email. Please try again.'); history.back();</script>";
 }
 
-pg_close($conn);
+if (DB_CONNECTED) {
+    db_close($conn);
+}
 ?>

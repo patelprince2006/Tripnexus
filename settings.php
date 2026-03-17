@@ -11,8 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_profile'])) {
     $phone = $_POST['phone'];
     $theme = $_POST['theme'];
 
-    $sql = "UPDATE users SET fullname = $1, phone = $2, theme = $3 WHERE id = $4";
-    $result = pg_query_params($conn, $sql, array($fullname, $phone, $theme, $user_id));
+    $sql = "UPDATE users SET fullname = ?, phone = ?, theme = ? WHERE id = ?";
+    $result = db_query($conn, $sql, array($fullname, $phone, $theme, $user_id));
 
     if ($result) {
         $_SESSION['theme'] = $theme; // Update session theme immediately
@@ -21,8 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_profile'])) {
 }
 
 // Fetch current user data
-$res = pg_query_params($conn, "SELECT * FROM users WHERE id = $1", array($user_id));
-$user = pg_fetch_assoc($res);
+$res = db_query($conn, "SELECT * FROM users WHERE id = ?", array($user_id));
+$user = db_fetch_assoc($res);
 ?>
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">

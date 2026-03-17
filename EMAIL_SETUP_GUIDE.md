@@ -142,7 +142,7 @@ All email templates are professionally designed with:
 
 ### Users Table (Enhanced)
 ```sql
-- is_verified (BOOLEAN)
+- is_verified (TINYINT(1))
 - email_verified_at (TIMESTAMP)
 - verification_code (VARCHAR)
 - verification_code_expiry (TIMESTAMP)
@@ -158,7 +158,7 @@ All email templates are professionally designed with:
 - subject (VARCHAR)
 - message (TEXT)
 - email_sent_at (TIMESTAMP)
-- is_read (BOOLEAN)
+- is_read (TINYINT(1))
 - created_at (TIMESTAMP)
 ```
 

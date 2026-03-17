@@ -1,16 +1,24 @@
-<?php
+﻿<?php
 include 'db.php';
 
-$queries = [
-    "ALTER TABLE hotels ADD COLUMN IF NOT EXISTS description TEXT",
-    "ALTER TABLE hotels ADD COLUMN IF NOT EXISTS main_image TEXT"
+$columnAdds = [
+    'description' => "ALTER TABLE hotels ADD COLUMN description TEXT",
+    'main_image' => "ALTER TABLE hotels ADD COLUMN main_image TEXT"
 ];
 
-foreach ($queries as $sql) {
-    if (pg_query($conn, $sql)) {
-        echo "Executed: $sql\n";
-    } else {
-        echo "Error executing $sql: " . pg_last_error($conn) . "\n";
+foreach ($columnAdds as $col => $sql) {
+    $check = db_query(
+        $conn,
+        "SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'hotels' AND column_name = ?",
+        [$col]
+    );
+
+    if ($check && db_num_rows($check) === 0) {
+        if (db_query($conn, $sql)) {
+            echo "Executed: $sql\n";
+        } else {
+            echo "Error executing $sql: " . db_last_error($conn) . "\n";
+        }
     }
 }
 ?>

@@ -24,29 +24,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
+    // Check if database is connected
+    if (!DB_CONNECTED) {
+        echo "<script>alert('Database connection failed. Please try again later.'); history.back();</script>";
+        exit();
+    }
+
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
     // Find user by reset token and check expiry
-    $checkQuery = pg_prepare($conn, "check_token", 
-        'SELECT id, email, fullname FROM users WHERE reset_token = $1 AND token_expiry > NOW()');
-    $checkResult = pg_execute($conn, "check_token", array($token));
+    $checkQuery = db_prepare($conn, "check_token", 
+        'SELECT id, email, fullname FROM users WHERE reset_token = ? AND token_expiry > NOW()');
+    $checkResult = db_execute($conn, "check_token", array($token));
 
-    if (pg_num_rows($checkResult) === 0) {
+    if (!$checkResult || db_num_rows($checkResult) === 0) {
         echo "<script>alert('Invalid or expired reset link. Please request a new one.'); window.location='forgot_password.html';</script>";
         exit();
     }
 
-    $user = pg_fetch_assoc($checkResult);
+    $user = db_fetch_assoc($checkResult);
     $userId = $user['id'];
     $userEmail = $user['email'];
     $fullname = $user['fullname'];
 
     // Update password and clear reset token
-    $updateQuery = pg_prepare($conn, "update_password", 
-        'UPDATE users SET password = $1, reset_token = NULL, token_expiry = NULL WHERE id = $2');
-    $updateResult = pg_execute($conn, "update_password", array($hashed_password, $userId));
+    $updateQuery = db_prepare($conn, "update_password", 
+        'UPDATE users SET password = ?, reset_token = NULL, token_expiry = NULL WHERE id = ?');
+    $updateResult = db_execute($conn, "update_password", array($hashed_password, $userId));
 
-    if ($updateResult && pg_affected_rows($updateResult) > 0) {
+    if ($updateResult && db_affected_rows($updateResult) > 0) {
         // Send confirmation email
         $emailService = new EmailService($conn);
         $emailService->saveNotification($userId, 'password_reset', 'Password Updated Successfully', 
@@ -57,5 +63,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "<script>alert('Error updating password. Please try again.'); history.back();</script>";
     }
 }
-pg_close($conn);
+
+if (DB_CONNECTED) {
+    db_close($conn);
+}
 ?>

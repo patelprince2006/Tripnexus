@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include 'db.php';
 
@@ -14,14 +14,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Search query for hotels
     // Searching by city or name
     $search_query = "SELECT * FROM hotels 
-                     WHERE city ILIKE $1 
-                     OR name ILIKE $1
+                     WHERE city LIKE ? 
+                     OR name LIKE ?
                      ORDER BY rating DESC";
     
-    $res = pg_query_params($conn, $search_query, array("%$city%"));
+    $res = db_query($conn, $search_query, array("%$city%"));
 
     if ($res) {
-        while ($row = pg_fetch_assoc($res)) {
+        while ($row = db_fetch_assoc($res)) {
             $results[] = $row;
         }
     }
@@ -68,7 +68,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <p class="text-muted small mb-2"><i class="bi bi-geo-alt-fill me-1"></i><?php echo htmlspecialchars($hotel['address']); ?></p>
                                 <p class="small mb-3"><?php echo htmlspecialchars($hotel['amenities']); ?></p>
                                 <div class="d-flex justify-content-between align-items-center mt-3">
-                                    <h4 class="text-warning text-dark fw-bold mb-0">₹<?php echo number_format($hotel['price_per_night'], 2); ?></h4>
+                                    <h4 class="text-warning text-dark fw-bold mb-0">â‚¹<?php echo number_format($hotel['price_per_night'], 2); ?></h4>
                                     <button class="btn btn-outline-dark fw-bold px-4 rounded-pill">View Room</button>
                                 </div>
                             </div>

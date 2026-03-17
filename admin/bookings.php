@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] == 'update_status') {
         $id = intval($_POST['booking_id']);
         $status = $_POST['status'];
-        pg_query_params($conn, "UPDATE bookings SET status = $1 WHERE id = $2", array($status, $id));
+        db_query($conn, "UPDATE bookings SET status = ? WHERE id = ?", array($status, $id));
         $msg = "Booking status updated to " . ucfirst($status);
     }
 }
@@ -21,7 +21,7 @@ $query = "
     JOIN users u ON b.user_id = u.id 
     ORDER BY b.booking_date DESC
 ";
-$result = pg_query($conn, $query);
+$result = db_query($conn, $query);
 
 $active_page = 'bookings';
 include 'includes/header.php';
@@ -49,7 +49,7 @@ include 'includes/sidebar.php';
                 </tr>
             </thead>
             <tbody>
-                <?php while ($row = pg_fetch_assoc($result)): ?>
+                <?php while ($row = db_fetch_assoc($result)): ?>
                 <tr>
                     <td>#<?php echo $row['id']; ?></td>
                     <td>

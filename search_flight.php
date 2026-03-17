@@ -13,15 +13,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $search_query = "SELECT f.*, a.airline_name, a.airline_logo 
                     FROM flights f 
                     JOIN airlines a ON f.airline_id = a.airline_id 
-                    WHERE f.departure_airport = $1 
-                    AND f.arrival_airport = $2 
-                    AND DATE(f.departure_time) = $3
+                    WHERE f.departure_airport = ? 
+                    AND f.arrival_airport = ? 
+                    AND DATE(f.departure_time) = ?
                     ORDER BY f.departure_time ASC";
 
-    $res = pg_query_params($conn, $search_query, array($from, $to, $travel_date));
+    $res = db_query($conn, $search_query, array($from, $to, $travel_date));
 
     if ($res) {
-        while ($row = pg_fetch_assoc($res)) {
+        while ($row = db_fetch_assoc($res)) {
             // Adding a mock rating since it's not in your DB yet
             $row['rating'] = rand(35, 50) / 10;
             $results[] = $row;

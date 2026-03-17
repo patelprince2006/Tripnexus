@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     
     if ($action == 'delete') {
         $id = intval($_POST['tour_id']);
-        pg_query_params($conn, "DELETE FROM tour_packages WHERE id = $1", array($id));
+        db_query($conn, "DELETE FROM tour_packages WHERE id = ?", array($id));
         $msg = "Tour package deleted!";
     } elseif ($action == 'save') {
         $name = $_POST['name'];
@@ -22,19 +22,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
         $id = isset($_POST['tour_id']) ? $_POST['tour_id'] : '';
 
         if ($id) {
-            $sql = "UPDATE tour_packages SET name=$1, location=$2, duration=$3, price=$4, description=$5, main_image=$6 WHERE id=$7";
-            pg_query_params($conn, $sql, array($name, $loc, $dur, $price, $desc, $image, $id));
+            $sql = "UPDATE tour_packages SET name=?, location=?, duration=?, price=?, description=?, main_image=? WHERE id=?";
+            db_query($conn, $sql, array($name, $loc, $dur, $price, $desc, $image, $id));
             $msg = "Tour package updated!";
         } else {
-            $sql = "INSERT INTO tour_packages (name, location, duration, price, description, main_image) VALUES ($1, $2, $3, $4, $5, $6)";
-            pg_query_params($conn, $sql, array($name, $loc, $dur, $price, $desc, $image));
+            $sql = "INSERT INTO tour_packages (name, location, duration, price, description, main_image) VALUES (?, ?, ?, ?, ?, ?)";
+            db_query($conn, $sql, array($name, $loc, $dur, $price, $desc, $image));
             $msg = "Tour package added!";
         }
     }
 }
 
 // Fetch Tours
-$result = pg_query($conn, "SELECT * FROM tour_packages ORDER BY id DESC");
+$result = db_query($conn, "SELECT * FROM tour_packages ORDER BY id DESC");
 
 $active_page = 'tours';
 include 'includes/header.php';
@@ -54,7 +54,7 @@ include 'includes/sidebar.php';
     <?php endif; ?>
 
     <div class="row">
-        <?php while ($row = pg_fetch_assoc($result)): ?>
+        <?php while ($row = db_fetch_assoc($result)): ?>
         <div class="col-md-4 mb-4">
             <div class="card h-100 shadow-sm">
                 <img src="<?php echo $row['main_image'] ? $row['main_image'] : 'https://placehold.co/400x200'; ?>" class="card-img-top" style="height: 200px; object-fit: cover;">

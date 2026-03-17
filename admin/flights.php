@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         if ($action == 'delete') {
             $flight_id = intval($_POST['flight_id']);
-            pg_query_params($conn, "DELETE FROM flights WHERE flight_id = $1", array($flight_id));
+            db_query($conn, "DELETE FROM flights WHERE flight_id = ?", array($flight_id));
             $msg = "Flight deleted!";
         } elseif ($action == 'save') {
             $f_num = $_POST['flight_number'];
@@ -25,15 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             if ($id) {
                 // Update
-                $sql = "UPDATE flights SET flight_number=$1, departure_airport=$2, arrival_airport=$3, departure_time=$4, arrival_time=$5, base_price=$6, total_seats=$7, available_seats=$8, status=$9 WHERE flight_id=$10";
-                pg_query_params($conn, $sql, array($f_num, $dep, $arr, $d_time, $a_time, $price, $seats, $avail, $status, $id));
+                $sql = "UPDATE flights SET flight_number=?, departure_airport=?, arrival_airport=?, departure_time=?, arrival_time=?, base_price=?, total_seats=?, available_seats=?, status=? WHERE flight_id=?";
+                db_query($conn, $sql, array($f_num, $dep, $arr, $d_time, $a_time, $price, $seats, $avail, $status, $id));
                 $msg = "Flight updated!";
             } else {
                 // Insert
                 // Assuming Airline ID 1 for now or add a select box
                 $airline_id = 1; 
-                $sql = "INSERT INTO flights (flight_number, airline_id, departure_airport, arrival_airport, departure_time, arrival_time, base_price, total_seats, available_seats, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)";
-                pg_query_params($conn, $sql, array($f_num, $airline_id, $dep, $arr, $d_time, $a_time, $price, $seats, $avail, $status));
+                $sql = "INSERT INTO flights (flight_number, airline_id, departure_airport, arrival_airport, departure_time, arrival_time, base_price, total_seats, available_seats, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                db_query($conn, $sql, array($f_num, $airline_id, $dep, $arr, $d_time, $a_time, $price, $seats, $avail, $status));
                 $msg = "Flight added!";
             }
         }
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Fetch Flights
 $query = "SELECT f.*, a.airline_name FROM flights f JOIN airlines a ON f.airline_id = a.airline_id ORDER BY f.departure_time DESC";
-$result = pg_query($conn, $query);
+$result = db_query($conn, $query);
 
 $active_page = 'flights';
 include 'includes/header.php';
@@ -76,7 +76,7 @@ include 'includes/sidebar.php';
                 </tr>
             </thead>
             <tbody>
-                <?php while ($row = pg_fetch_assoc($result)): ?>
+                <?php while ($row = db_fetch_assoc($result)): ?>
                 <tr>
                     <td><?php echo $row['flight_number']; ?></td>
                     <td><?php echo $row['airline_name']; ?></td>

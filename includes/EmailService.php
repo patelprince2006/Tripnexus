@@ -128,9 +128,9 @@ class EmailService {
      * Save notification to database
      */
     public function saveNotification($userId, $type, $subject, $message) {
-        $query = pg_query_params(
+        $query = db_query(
             $this->conn,
-            'INSERT INTO notifications (user_id, type, subject, message) VALUES ($1, $2, $3, $4)',
+            'INSERT INTO notifications (user_id, type, subject, message) VALUES (?, ?, ?, ?)',
             array($userId, $type, $subject, $message)
         );
 

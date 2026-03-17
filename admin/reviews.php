@@ -7,10 +7,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     $id = intval($_POST['review_id']);
     
     if ($_POST['action'] == 'approve') {
-        pg_query_params($conn, "UPDATE reviews SET status = 'approved' WHERE id = $1", array($id));
+        db_query($conn, "UPDATE reviews SET status = 'approved' WHERE id = ?", array($id));
         $msg = "Review approved!";
     } elseif ($_POST['action'] == 'delete') {
-        pg_query_params($conn, "DELETE FROM reviews WHERE id = $1", array($id));
+        db_query($conn, "DELETE FROM reviews WHERE id = ?", array($id));
         $msg = "Review deleted!";
     }
 }
@@ -22,7 +22,7 @@ $query = "
     JOIN users u ON r.user_id = u.id 
     ORDER BY r.created_at DESC
 ";
-$result = pg_query($conn, $query);
+$result = db_query($conn, $query);
 
 $active_page = 'reviews';
 include 'includes/header.php';
@@ -49,7 +49,7 @@ include 'includes/sidebar.php';
                 </tr>
             </thead>
             <tbody>
-                <?php while ($row = pg_fetch_assoc($result)): ?>
+                <?php while ($row = db_fetch_assoc($result)): ?>
                 <tr>
                     <td><?php echo htmlspecialchars($row['fullname']); ?></td>
                     <td><span class="badge bg-secondary"><?php echo strtoupper($row['review_type']); ?></span></td>

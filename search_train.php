@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include 'db.php';
 
@@ -12,16 +12,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Search query for trains
     $search_query = "SELECT * FROM trains 
-                     WHERE from_station ILIKE $1 
-                     AND to_station ILIKE $2
+                     WHERE from_station LIKE ? 
+                     AND to_station LIKE ?
                      ORDER BY departure_time ASC";
     
-    // Using ILIKE for case-insensitive search
+    // Using LIKE for case-insensitive search
     
-    $res = pg_query_params($conn, $search_query, array("%$from%", "%$to%"));
+    $res = db_query($conn, $search_query, array("%$from%", "%$to%"));
 
     if ($res) {
-        while ($row = pg_fetch_assoc($res)) {
+        while ($row = db_fetch_assoc($res)) {
             $results[] = $row;
         }
     }
@@ -64,7 +64,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <h5 class="mb-0"><?php echo date('H:i', strtotime($train['departure_time'])); ?></h5>
                                 <div class="text-muted small"><?php echo htmlspecialchars($train['from_station']); ?></div>
                             </div>
-                            <div class="col-md-1 text-center text-muted">➔</div>
+                            <div class="col-md-1 text-center text-muted">âž”</div>
                             <div class="col-md-2 text-center">
                                 <h5 class="mb-0"><?php echo date('H:i', strtotime($train['arrival_time'])); ?></h5>
                                 <div class="text-muted small"><?php echo htmlspecialchars($train['to_station']); ?></div>
@@ -78,7 +78,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 ?>
                             </div>
                             <div class="col-md-2 text-end">
-                                <h4 class="text-info fw-bold">₹<?php echo number_format($train['price'], 2); ?></h4>
+                                <h4 class="text-info fw-bold">â‚¹<?php echo number_format($train['price'], 2); ?></h4>
                                 <button class="btn btn-info fw-bold rounded-pill px-4 text-white">Book Now</button>
                             </div>
                         </div>

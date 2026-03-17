@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 include '../db.php';
 include 'auth_check.php';
 
@@ -8,25 +8,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
 
     if ($action == 'block') {
-        pg_query_params($conn, "UPDATE users SET status = 'blocked' WHERE id = $1", array($user_id));
+        db_query($conn, "UPDATE users SET status = 'blocked' WHERE id = ?", array($user_id));
         $msg = "User blocked successfully!";
     } elseif ($action == 'unblock') {
-        pg_query_params($conn, "UPDATE users SET status = 'active' WHERE id = $1", array($user_id));
+        db_query($conn, "UPDATE users SET status = 'active' WHERE id = ?", array($user_id));
         $msg = "User unblocked successfully!";
     } elseif ($action == 'delete') {
-        pg_query_params($conn, "DELETE FROM users WHERE id = $1", array($user_id));
+        db_query($conn, "DELETE FROM users WHERE id = ?", array($user_id));
         $msg = "User deleted successfully!";
     }
 }
 
 // Fetch Users
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';`r`nif ($search) { $search = db_escape($conn, $search); }
 if ($search) {
-    $query = "SELECT * FROM users WHERE fullname ILIKE '%$search%' OR email ILIKE '%$search%' ORDER BY id DESC";
+    $query = "SELECT * FROM users WHERE fullname LIKE '%$search%' OR email LIKE '%$search%' ORDER BY id DESC";
 } else {
     $query = "SELECT * FROM users ORDER BY id DESC";
 }
-$result = pg_query($conn, $query);
+$result = db_query($conn, $query);
 
 $active_page = 'users';
 include 'includes/header.php';
@@ -58,7 +58,7 @@ include 'includes/sidebar.php';
                 </tr>
             </thead>
             <tbody>
-                <?php while ($row = pg_fetch_assoc($result)): ?>
+                <?php while ($row = db_fetch_assoc($result)): ?>
                 <tr>
                     <td>#<?php echo $row['id']; ?></td>
                     <td><?php echo htmlspecialchars($row['fullname']); ?></td>
@@ -95,3 +95,4 @@ include 'includes/sidebar.php';
 </div>
 
 <?php include 'includes/footer.php'; ?>
+

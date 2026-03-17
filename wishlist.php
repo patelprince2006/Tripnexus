@@ -18,7 +18,7 @@ $query = "SELECT f.*, a.airline_name, a.airline_logo
           JOIN airlines a ON f.airline_id = a.airline_id 
           LIMIT 3"; // In a real app, join with a 'wishlist' table on user_id
 
-$result = pg_query($conn, $query);
+$result = db_query($conn, $query);
 ?>
 
 <!DOCTYPE html>
@@ -53,7 +53,7 @@ $result = pg_query($conn, $query);
         <h2 class="fw-bold mb-4"><i class="bi bi-heart-fill text-danger me-2"></i>My Wishlist</h2>
 
         <div class="row g-4">
-            <?php while ($flight = pg_fetch_assoc($result)): ?>
+            <?php while ($flight = db_fetch_assoc($result)): ?>
                 <div class="col-md-4">
                     <div class="card wishlist-card border-0 shadow-sm h-100">
                         <div class="position-relative">

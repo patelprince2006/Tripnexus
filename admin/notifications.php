@@ -11,26 +11,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($title && $message) {
         // Send notification to ALL users
-        $users_result = pg_query($conn, "SELECT id FROM users");
+        $users_result = db_query($conn, "SELECT id FROM users");
         
         if (!$users_result) {
-            $msg = "Error fetching users: " . pg_last_error($conn);
+            $msg = "Error fetching users: " . db_last_error($conn);
         } else {
             $sent_count = 0;
-            $total_users = pg_num_rows($users_result);
+            $total_users = db_num_rows($users_result);
             
             // Loop through all users and send notification to each one
-            while ($user_row = pg_fetch_assoc($users_result)) {
+            while ($user_row = db_fetch_assoc($users_result)) {
                 $user_id = $user_row['id'];
                 
                 // Insert notification for this specific user
-                $sql = "INSERT INTO notifications (subject, message, type, user_id, is_read) VALUES ($1, $2, $3, $4, $5)";
-                $insert_result = pg_query_params($conn, $sql, array($title, $message, $type, $user_id, 'false'));
+                $sql = "INSERT INTO notifications (subject, message, type, user_id, is_read) VALUES (?, ?, ?, ?, ?)";
+                $insert_result = db_query($conn, $sql, array($title, $message, $type, $user_id, 'false'));
                 
                 if ($insert_result) {
                     $sent_count++;
                 } else {
-                    $msg = "Error sending to user $user_id: " . pg_last_error($conn);
+                    $msg = "Error sending to user $user_id: " . db_last_error($conn);
                     break;
                 }
             }
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 // Fetch Past Notifications
-$result = pg_query($conn, "SELECT n.*, u.id as user_id, u.fullname 
+$result = db_query($conn, "SELECT n.*, u.id as user_id, u.fullname 
           FROM notifications n 
           LEFT JOIN users u ON n.user_id = u.id 
           ORDER BY n.created_at DESC");
@@ -108,7 +108,7 @@ include 'includes/sidebar.php';
                             </tr>
                         </thead>
                         <tbody>
-                            <?php while ($row = pg_fetch_assoc($result)): ?>
+                            <?php while ($row = db_fetch_assoc($result)): ?>
                             <tr>
                                 <td><?php echo htmlspecialchars($row['user_id']); ?></td>
                                 <td><?php echo htmlspecialchars($row['title'] ?? $row['subject'] ?? 'No Title'); ?></td>

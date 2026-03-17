@@ -3,10 +3,10 @@ include '../db.php';
 include 'auth_check.php';
 
 // Fetch Statistics
-$users_count = pg_fetch_assoc(pg_query($conn, "SELECT COUNT(*) as c FROM users"))['c'];
-$bookings_count = pg_fetch_assoc(pg_query($conn, "SELECT COUNT(*) as c FROM bookings"))['c'];
-$revenue = pg_fetch_assoc(pg_query($conn, "SELECT SUM(amount) as s FROM payments WHERE payment_status = 'success'"))['s'];
-$hotels_count = pg_fetch_assoc(pg_query($conn, "SELECT COUNT(*) as c FROM hotels"))['c'];
+$users_count = db_fetch_assoc(db_query($conn, "SELECT COUNT(*) as c FROM users"))['c'];
+$bookings_count = db_fetch_assoc(db_query($conn, "SELECT COUNT(*) as c FROM bookings"))['c'];
+$revenue = db_fetch_assoc(db_query($conn, "SELECT SUM(amount) as s FROM payments WHERE payment_status = 'success'"))['s'];
+$hotels_count = db_fetch_assoc(db_query($conn, "SELECT COUNT(*) as c FROM hotels"))['c'];
 
 if (!$revenue) $revenue = 0;
 

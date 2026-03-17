@@ -218,34 +218,6 @@
 
                     <!-- Bus Search -->
                     <div class="tab-pane fade" id="pills-bus" role="tabpanel">
-<<<<<<< HEAD
-                        <div class="modern-search-wrapper shadow-lg">
-                            <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
-                                <span class="badge bg-light text-dark border"><i class="bi bi-check-circle-fill text-success me-1"></i>AC / Non-AC</span>
-                                <span class="badge bg-light text-dark border"><i class="bi bi-check-circle-fill text-success me-1"></i>Sleeper / Seater</span>
-                            </div>
-                            <div class="modern-search-bar p-2 d-flex flex-wrap align-items-center">
-                                <div class="search-input-group border-end flex-grow-1 px-3 py-2">
-                                    <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-bus-front-fill text-danger me-1"></i>From</label>
-                                    <input type="text" class="border-0 w-100 fw-bold" placeholder="Bangalore">
-                                    <div class="small text-muted">Majestic Bus Stand</div>
-                                </div>
-                                <div class="search-input-group border-end flex-grow-1 px-3 py-2">
-                                    <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i>To</label>
-                                    <input type="text" class="border-0 w-100 fw-bold" placeholder="Hyderabad">
-                                    <div class="small text-muted">MG Bus Station</div>
-                                </div>
-                                <div class="search-input-group px-3 py-2" style="min-width: 200px;">
-                                    <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-calendar-event text-danger me-1"></i>Travel Date</label>
-                                    <input type="text" class="border-0 w-100 fw-bold" onfocus="(this.type='date')" placeholder="Select Date">
-                                    <div class="small text-muted">Select Travel Date</div>
-                                </div>
-                                <button class="btn btn-danger btn-search rounded-pill px-5 py-3 ms-2 fw-bold text-white shadow-lg">
-                                    Search Bus
-                                </button>
-                            </div>
-                        </div>
-=======
                         <form method="POST" action="search_bus.php">
                             <div class="modern-search-wrapper shadow-lg">
                                 <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
@@ -311,39 +283,10 @@
                                 </div>
                             </div>
                         </form>
->>>>>>> origin
                     </div>
 
                     <!-- Train Search -->
                     <div class="tab-pane fade" id="pills-train" role="tabpanel">
-<<<<<<< HEAD
-                        <div class="modern-search-wrapper shadow-lg">
-                            <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
-                                <span><i class="bi bi-info-circle"></i> PNR Status</span>
-                                <span><i class="bi bi-info-circle"></i> Live Train Status</span>
-                            </div>
-                            <div class="modern-search-bar p-2 d-flex flex-wrap align-items-center">
-                                <div class="search-input-group border-end flex-grow-1 px-3 py-2">
-                                    <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-train-front-fill text-info me-1"></i>From Station</label>
-                                    <input type="text" class="border-0 w-100 fw-bold" placeholder="Chennai Central">
-                                    <div class="small text-muted">MAS</div>
-                                </div>
-                                <div class="search-input-group border-end flex-grow-1 px-3 py-2">
-                                    <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-geo-alt-fill text-info me-1"></i>To Station</label>
-                                    <input type="text" class="border-0 w-100 fw-bold" placeholder="Coimbatore Jn">
-                                    <div class="small text-muted">CBE</div>
-                                </div>
-                                <div class="search-input-group px-3 py-2" style="min-width: 200px;">
-                                    <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-calendar-event text-info me-1"></i>Journey Date</label>
-                                    <input type="text" class="border-0 w-100 fw-bold" onfocus="(this.type='date')" placeholder="Select Date">
-                                    <div class="small text-muted">Select Date</div>
-                                </div>
-                                <button class="btn btn-info btn-search rounded-pill px-5 py-3 ms-2 fw-bold text-white shadow-lg">
-                                    Search Train
-                                </button>
-                            </div>
-                        </div>
-=======
                         <form method="POST" action="search_train.php">
                             <div class="modern-search-wrapper shadow-lg">
                                 <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
@@ -379,42 +322,10 @@
                                 </div>
                             </div>
                         </form>
->>>>>>> origin
                     </div>
 
                     <!-- Hotel Search -->
                     <div class="tab-pane fade" id="pills-hotels" role="tabpanel">
-<<<<<<< HEAD
-                        <div class="modern-search-wrapper shadow-lg">
-                            <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
-                                <span><i class="bi bi-star-fill text-warning"></i> 5-Star</span>
-                                <span><i class="bi bi-star-fill text-warning"></i> Villas</span>
-                                <span><i class="bi bi-star-fill text-warning"></i> Resorts</span>
-                            </div>
-                            <div class="modern-search-bar p-2 d-flex flex-wrap align-items-center">
-                                <div class="search-input-group border-end flex-grow-1 px-3 py-2">
-                                    <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-building-fill text-warning me-1"></i>City / Hotel</label>
-                                    <input type="text" class="border-0 w-100 fw-bold" placeholder="Goa, India">
-                                    <div class="small text-muted">Search by city or hotel name</div>
-                                </div>
-                                <div class="search-input-group border-end px-3 py-2" style="min-width: 140px;">
-                                    <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-calendar-check text-warning me-1"></i>Check-in</label>
-                                    <input type="text" class="border-0 w-100 fw-bold" onfocus="(this.type='date')" placeholder="Add Date">
-                                </div>
-                                <div class="search-input-group border-end px-3 py-2" style="min-width: 140px;">
-                                    <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-calendar-x text-warning me-1"></i>Check-out</label>
-                                    <input type="text" class="border-0 w-100 fw-bold" onfocus="(this.type='date')" placeholder="Add Date">
-                                </div>
-                                <div class="search-input-group px-3 py-2" style="min-width: 150px;">
-                                    <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-people-fill text-warning me-1"></i>Guests</label>
-                                    <input type="text" class="border-0 w-100 fw-bold" placeholder="2 Guests, 1 Room">
-                                </div>
-                                <button class="btn btn-warning btn-search rounded-pill px-4 py-3 ms-2 fw-bold text-dark shadow-lg">
-                                    Search Hotels
-                                </button>
-                            </div>
-                        </div>
-=======
                         <form method="POST" action="search_hotel.php">
                             <div class="modern-search-wrapper shadow-lg">
                                 <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
@@ -451,7 +362,6 @@
                                 </div>
                             </div>
                         </form>
->>>>>>> origin
                     </div>
                 </div>
             </div>

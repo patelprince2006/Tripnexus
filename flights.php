@@ -16,8 +16,8 @@ $error_message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $search_performed = true;
     
-    $departure = isset($_POST['departure']) ? pg_escape_string($conn, $_POST['departure']) : '';
-    $arrival = isset($_POST['arrival']) ? pg_escape_string($conn, $_POST['arrival']) : '';
+    $departure = isset($_POST['departure']) ? db_escape($conn, $_POST['departure']) : '';
+    $arrival = isset($_POST['arrival']) ? db_escape($conn, $_POST['arrival']) : '';
     $departure_date = isset($_POST['departure_date']) ? $_POST['departure_date'] : '';
     $passengers = isset($_POST['passengers']) ? intval($_POST['passengers']) : 1;
     
@@ -56,12 +56,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ORDER BY f.departure_time ASC
         ";
         
-        $result = pg_query($conn, $query);
+        $result = db_query($conn, $query);
         
         if (!$result) {
-            $error_message = "Database error: " . pg_last_error($conn);
+            $error_message = "Database error: " . db_last_error($conn);
         } else {
-            $flights = pg_fetch_all($result);
+            $flights = db_fetch_all($result);
         }
     }
 }

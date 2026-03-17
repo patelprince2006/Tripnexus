@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     
     if ($action == 'delete') {
         $id = intval($_POST['hotel_id']);
-        pg_query_params($conn, "DELETE FROM hotels WHERE hotel_id = $1", array($id));
+        db_query($conn, "DELETE FROM hotels WHERE hotel_id = ?", array($id));
         $msg = "Hotel deleted!";
     } elseif ($action == 'save') {
         $name = $_POST['name'];
@@ -28,22 +28,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
         }
 
         if ($id && is_numeric($id)) {
-            $sql = "UPDATE hotels SET name=$1, city=$2, address=$3, description=$4, price_per_night=$5, rating=$6, main_image=$7 WHERE hotel_id=$8";
-            pg_query_params($conn, $sql, array($name, $city, $address, $desc, $price, $rating, $image, intval($id)));
+            $sql = "UPDATE hotels SET name=?, city=?, address=?, description=?, price_per_night=?, rating=?, main_image=? WHERE hotel_id=?";
+            db_query($conn, $sql, array($name, $city, $address, $desc, $price, $rating, $image, intval($id)));
             $msg = "Hotel updated!";
         } else {
-            $sql = "INSERT INTO hotels (name, city, address, description, price_per_night, rating, main_image) VALUES ($1, $2, $3, $4, $5, $6, $7)";
-            pg_query_params($conn, $sql, array($name, $city, $address, $desc, $price, $rating, $image));
+            $sql = "INSERT INTO hotels (name, city, address, description, price_per_night, rating, main_image) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            db_query($conn, $sql, array($name, $city, $address, $desc, $price, $rating, $image));
             $msg = "Hotel added!";
         }
     }
 }
 
 // Fetch Hotels
-$result = pg_query($conn, "SELECT * FROM hotels ORDER BY hotel_id DESC");
+$result = db_query($conn, "SELECT * FROM hotels ORDER BY hotel_id DESC");
 
 if (!$result) {
-    die("Error in query: " . pg_last_error($conn));
+    die("Error in query: " . db_last_error($conn));
 }
 
 $active_page = 'hotels';
@@ -76,7 +76,7 @@ include 'includes/sidebar.php';
                 </tr>
             </thead>
             <tbody>
-                <?php while ($row = pg_fetch_assoc($result)): ?>
+                <?php while ($row = db_fetch_assoc($result)): ?>
                 <tr>
                     <td><img src="<?php echo $row['main_image'] ? $row['main_image'] : 'https://placehold.co/50'; ?>" width="50" class="rounded"></td>
                     <td><?php echo htmlspecialchars($row['name']); ?></td>

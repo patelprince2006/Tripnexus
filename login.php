@@ -7,11 +7,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = trim($_POST['password']);
 
     // Fetch user from database
-    $result = pg_prepare($conn, "login_query", 'SELECT id, fullname, password, is_verified FROM users WHERE email = $1');
-    $result = pg_execute($conn, "login_query", array($email));
+    $result = db_prepare($conn, "login_query", 'SELECT id, fullname, password, is_verified FROM users WHERE email = ?');
+    $result = db_execute($conn, "login_query", array($email));
 
-    if (pg_num_rows($result) > 0) {
-        $row = pg_fetch_assoc($result);
+    if (db_num_rows($result) > 0) {
+        $row = db_fetch_assoc($result);
 
         // Check if email is verified
         if (!$row['is_verified']) {
@@ -34,5 +34,5 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "<script>alert('No account found with this email'); history.back();</script>";
     }
 }
-pg_close($conn);
+db_close($conn);
 ?>

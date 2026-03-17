@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * TripNexus - Database Migration Runner
  * Executes all pending SQL migration files
@@ -42,16 +42,16 @@ class MigrationRunner {
      */
     private function createMigrationsTable() {
         $sql = "CREATE TABLE IF NOT EXISTS migrations (
-                    id SERIAL PRIMARY KEY,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
                     migration_name VARCHAR(255) UNIQUE NOT NULL,
-                    executed_at TIMESTAMP DEFAULT NOW()
-                );";
-        
-        $result = pg_query($this->conn, $sql);
+                    executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB;";
+
+        $result = db_query($this->conn, $sql);
         if (!$result) {
             $this->results[] = [
                 'status' => 'error',
-                'message' => 'Failed to create migrations table: ' . pg_last_error($this->conn)
+                'message' => 'Failed to create migrations table: ' . db_last_error($this->conn)
             ];
         }
     }
@@ -76,16 +76,16 @@ class MigrationRunner {
         $filepath = $this->migrationsDir . '/' . $filename;
 
         // Check if migration already executed
-        $checkQuery = pg_query_params(
+        $checkQuery = db_query(
             $this->conn,
-            "SELECT id FROM migrations WHERE migration_name = $1",
+            "SELECT id FROM migrations WHERE migration_name = ?",
             array($migrationName)
         );
 
-        if (pg_num_rows($checkQuery) > 0) {
+        if (db_num_rows($checkQuery) > 0) {
             $this->results[] = [
                 'status' => 'skip',
-                'message' => "→ Already executed: $migrationName"
+                'message' => "-> Already executed: $migrationName"
             ];
             return;
         }
@@ -96,38 +96,44 @@ class MigrationRunner {
         if (!$sql) {
             $this->results[] = [
                 'status' => 'error',
-                'message' => "✗ Failed to read: $migrationName"
+                'message' => "Failed to read: $migrationName"
             ];
             return;
         }
 
-        // Execute SQL
-        $result = pg_query($this->conn, $sql);
-
-        if (!$result) {
-            $this->results[] = [
-                'status' => 'error',
-                'message' => "✗ Failed to execute: $migrationName - " . pg_last_error($this->conn)
-            ];
-            return;
+        // Split into individual statements (simple splitter for these migrations)
+        $statements = preg_split('/;\s*/', $sql);
+        foreach ($statements as $statement) {
+            $statement = trim($statement);
+            if ($statement === '') {
+                continue;
+            }
+            $result = db_query($this->conn, $statement);
+            if (!$result) {
+                $this->results[] = [
+                    'status' => 'error',
+                    'message' => "Failed to execute: $migrationName - " . db_last_error($this->conn)
+                ];
+                return;
+            }
         }
 
         // Record migration as executed
-        $insertQuery = pg_query_params(
+        $insertQuery = db_query(
             $this->conn,
-            "INSERT INTO migrations (migration_name) VALUES ($1)",
+            "INSERT INTO migrations (migration_name) VALUES (?)",
             array($migrationName)
         );
 
         if ($insertQuery) {
             $this->results[] = [
                 'status' => 'success',
-                'message' => "✓ Executed: $migrationName"
+                'message' => "Executed: $migrationName"
             ];
         } else {
             $this->results[] = [
                 'status' => 'error',
-                'message' => "✗ Failed to record: $migrationName"
+                'message' => "Failed to record: $migrationName"
             ];
         }
     }
@@ -154,10 +160,10 @@ if (php_sapi_name() === 'cli' || (isset($_GET['run']) && $_GET['run'] === 'true'
     $migrationsDir = __DIR__;
     $runner = new MigrationRunner($conn, $migrationsDir);
     $results = $runner->runPendingMigrations();
-    
+
     echo $runner->getFormattedResults();
-    
+
     // Close connection
-    pg_close($conn);
+    db_close($conn);
 }
 ?>

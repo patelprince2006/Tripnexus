@@ -10,7 +10,7 @@ $query = "
     JOIN bookings b ON p.booking_id = b.id 
     ORDER BY p.payment_date DESC
 ";
-$result = pg_query($conn, $query);
+$result = db_query($conn, $query);
 
 $active_page = 'payments';
 include 'includes/header.php';
@@ -34,7 +34,7 @@ include 'includes/sidebar.php';
                 </tr>
             </thead>
             <tbody>
-                <?php while ($row = pg_fetch_assoc($result)): ?>
+                <?php while ($row = db_fetch_assoc($result)): ?>
                 <tr>
                     <td>#<?php echo $row['id']; ?></td>
                     <td><?php echo $row['transaction_id'] ? $row['transaction_id'] : 'N/A'; ?></td>

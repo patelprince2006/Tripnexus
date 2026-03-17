@@ -12,12 +12,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
+    // Check if database is connected
+    if (!DB_CONNECTED) {
+        echo "<script>alert('Database connection failed. Please try again later.'); history.back();</script>";
+        exit();
+    }
+
     // Check if email exists
-    $check_query = pg_prepare($conn, "check_email", 'SELECT id, fullname FROM users WHERE email = $1');
-    $result = pg_execute($conn, "check_email", array($email));
+    $check_query = db_prepare($conn, "check_email", 'SELECT id, fullname FROM users WHERE email = ?');
+    $result = db_execute($conn, "check_email", array($email));
     
-    if (pg_num_rows($result) > 0) {
-        $user = pg_fetch_assoc($result);
+    if (db_num_rows($result) > 0) {
+        $user = db_fetch_assoc($result);
         $userId = $user['id'];
         $fullname = $user['fullname'];
 
@@ -26,8 +32,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $expiry = date("Y-m-d H:i:s", strtotime("+1 hour"));
         
         // Update database with token
-        $update_query = pg_prepare($conn, "update_token", 'UPDATE users SET reset_token = $1, token_expiry = $2 WHERE id = $3');
-        $updateResult = pg_execute($conn, "update_token", array($token, $expiry, $userId));
+        $update_query = db_prepare($conn, "update_token", 'UPDATE users SET reset_token = ?, token_expiry = ? WHERE id = ?');
+        $updateResult = db_execute($conn, "update_token", array($token, $expiry, $userId));
 
         if ($updateResult) {
             // Send password reset email
@@ -51,5 +57,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "<script>alert('No account found with this email'); history.back();</script>";
     }
 }
-pg_close($conn);
+
+if (DB_CONNECTED) {
+    db_close($conn);
+}
 ?>

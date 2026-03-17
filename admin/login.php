@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include '../db.php';
 
@@ -16,22 +16,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($username) || empty($password)) {
         $error = "Please enter both username and password.";
     } else {
-        // Check if admins table exists
-        $table_check = pg_query($conn, "SELECT to_regclass('admins')");
-        if (!$table_check || !pg_fetch_result($table_check, 0, 0)) {
+                // Check if admins table exists
+        $table_check = db_query($conn, "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'admins'");
+        $table_exists = $table_check ? (int) db_fetch_value($table_check, 0, 0) : 0;
+        if ($table_exists === 0) {
             // Auto-setup the admin database
             include 'setup_admin_db.php';
             echo "<div class='alert alert-success'>Admin database has been set up automatically. Please try logging in again.</div>";
             exit();
         } else {
             // Query database
-            $query = "SELECT * FROM admins WHERE username = $1";
-            $result = pg_query_params($conn, $query, array($username));
+            $query = "SELECT * FROM admins WHERE username = ?";
+            $result = db_query($conn, $query, array($username));
 
             if (!$result) {
                 $error = "Database error occurred. Please try again later.";
-            } else if (pg_num_rows($result) > 0) {
-                $admin = pg_fetch_assoc($result);
+            } else if (db_num_rows($result) > 0) {
+                $admin = db_fetch_assoc($result);
                 if (password_verify($password, $admin['password'])) {
                     // Successful login
                     $_SESSION['admin_logged_in'] = true;
@@ -57,7 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - SkyHigh</title>
+    <title>Admin Login - TripNexus</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -118,3 +119,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 </body>
 </html>
+
+
+

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include 'db.php';
 
@@ -14,18 +14,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Note: In a real app, you would compare DATE(departure_time) with $date
     // For this example, we'll just check if the route matches
     $search_query = "SELECT * FROM buses 
-                     WHERE from_location ILIKE $1 
-                     AND to_location ILIKE $2
+                     WHERE from_location LIKE ? 
+                     AND to_location LIKE ?
                      ORDER BY departure_time ASC";
     
-    // Using ILIKE for case-insensitive search
+    // Using LIKE for case-insensitive search
     // We are not filtering by date strictly for this demo to ensure results show up if dummy data doesn't match date exactly
-    // In production: AND DATE(departure_time) = $3
+    // In production: AND DATE(departure_time) = ?
     
-    $res = pg_query_params($conn, $search_query, array("%$from%", "%$to%"));
+    $res = db_query($conn, $search_query, array("%$from%", "%$to%"));
 
     if ($res) {
-        while ($row = pg_fetch_assoc($res)) {
+        while ($row = db_fetch_assoc($res)) {
             $results[] = $row;
         }
     }
@@ -70,7 +70,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <h5 class="mb-0"><?php echo date('H:i', strtotime($bus['departure_time'])); ?></h5>
                                 <div class="text-muted small"><?php echo htmlspecialchars($bus['from_location']); ?></div>
                             </div>
-                            <div class="col-md-1 text-center text-muted">➔</div>
+                            <div class="col-md-1 text-center text-muted">âž”</div>
                             <div class="col-md-2 text-center">
                                 <h5 class="mb-0"><?php echo date('H:i', strtotime($bus['arrival_time'])); ?></h5>
                                 <div class="text-muted small"><?php echo htmlspecialchars($bus['to_location']); ?></div>
@@ -84,7 +84,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 ?>
                             </div>
                             <div class="col-md-2 text-end">
-                                <h4 class="text-danger fw-bold">₹<?php echo number_format($bus['price'], 2); ?></h4>
+                                <h4 class="text-danger fw-bold">â‚¹<?php echo number_format($bus['price'], 2); ?></h4>
                                 <button class="btn btn-danger fw-bold rounded-pill px-4">Book Seat</button>
                             </div>
                         </div>

@@ -12,42 +12,42 @@ $fullname = $_SESSION['fullname'];
 
 // Fetch stats using PostgreSQL syntax
 $sql = "SELECT 
-            (SELECT COUNT(*) FROM bookings WHERE user_id = $1 AND status = 'confirmed') as active_trips,
-            (SELECT COUNT(*) FROM bookings WHERE user_id = $1) as total_bookings";
+            (SELECT COUNT(*) FROM bookings WHERE user_id = ? AND status = 'confirmed') as active_trips,
+            (SELECT COUNT(*) FROM bookings WHERE user_id = ?) as total_bookings";
 
-$result = pg_query_params($conn, $sql, array($user_id));
+$result = db_query($conn, $sql, array($user_id, $user_id));
 
 if ($result) {
-    $stats = pg_fetch_assoc($result);
+    $stats = db_fetch_assoc($result);
 } else {
     // Default values if the query fails or table is empty
     $stats = ['active_trips' => 0, 'total_bookings' => 0];
 }
 
 // Fetch recent notifications
-$notifQuery = pg_query_params(
+$notifQuery = db_query(
     $conn,
-    'SELECT id, type, subject, message, created_at, is_read FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 5',
+    'SELECT id, type, subject, message, created_at, is_read FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 5',
     array($user_id)
 );
 
 $notifications = [];
 if ($notifQuery) {
-    while ($row = pg_fetch_assoc($notifQuery)) {
+    while ($row = db_fetch_assoc($notifQuery)) {
         $notifications[] = $row;
     }
 }
 
 // Count unread notifications
-$unreadQuery = pg_query_params(
+$unreadQuery = db_query(
     $conn,
-    'SELECT COUNT(*) as unread_count FROM notifications WHERE user_id = $1 AND is_read = false',
+    'SELECT COUNT(*) as unread_count FROM notifications WHERE user_id = ? AND is_read = false',
     array($user_id)
 );
 
 $unreadCount = 0;
 if ($unreadQuery) {
-    $unreadRow = pg_fetch_assoc($unreadQuery);
+    $unreadRow = db_fetch_assoc($unreadQuery);
     $unreadCount = $unreadRow['unread_count'];
 }
 ?>

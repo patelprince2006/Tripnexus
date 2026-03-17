@@ -26,14 +26,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
+    // Check if database is connected
+    if (empty($DB_CONNECTED)) {
+        echo "<script>alert('Database connection failed. Please try again later.'); history.back();</script>";
+        exit;
+    }
+
     // Hash password
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
     // Check if email already exists
-    $check_res = pg_prepare($conn, "email_exists", 'SELECT email FROM users WHERE email = $1');
-    $check_res = pg_execute($conn, "email_exists", array($email));
+    $check_res = db_prepare($conn, "email_exists", 'SELECT email FROM users WHERE email = ?');
+    $check_res = db_execute($conn, "email_exists", array($email));
 
-    if (pg_num_rows($check_res) > 0) {
+    if ($check_res && db_num_rows($check_res) > 0) {
         echo "<script>alert('Email already registered!'); history.back();</script>";
         exit;
     }
@@ -43,13 +49,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $expiryTime = date('Y-m-d H:i:s', strtotime('+' . VERIFICATION_CODE_EXPIRY . ' minutes'));
 
     // Insert new user into database
-    $insert_res = pg_prepare($conn, "reg_user", 
+    $insert_res = db_prepare($conn, "reg_user", 
         'INSERT INTO users (fullname, email, password, verification_code, verification_code_expiry, is_verified) 
-         VALUES ($1, $2, $3, $4, $5, false)');
-    $insert_res = pg_execute($conn, "reg_user", array($fullname, $email, $hashedPassword, $verificationCode, $expiryTime));
+         VALUES (?, ?, ?, ?, ?, false)');
+    $insert_res = db_execute($conn, "reg_user", array($fullname, $email, $hashedPassword, $verificationCode, $expiryTime));
 
     if (!$insert_res) {
-        echo "<script>alert('Error: " . pg_last_error($conn) . "'); history.back();</script>";
+        echo "<script>alert('Error: " . db_last_error($conn) . "'); history.back();</script>";
         exit;
     }
 
@@ -62,8 +68,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_SESSION['pending_verification_email'] = $email;
         
         // Save notification
-        $getUserId = pg_query_params($conn, 'SELECT id FROM users WHERE email = $1', array($email));
-        $userData = pg_fetch_assoc($getUserId);
+        $getUserId = db_query($conn, 'SELECT id FROM users WHERE email = ?', array($email));
+        $userData = db_fetch_assoc($getUserId);
         
         if ($userData) {
             $emailService->saveNotification($userData['id'], 'verification', 'Verify Your Email', 
@@ -73,9 +79,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "<script>window.location='verify_email.html';</script>";
     } else {
         // Delete user if email sending failed
-        pg_query_params($conn, 'DELETE FROM users WHERE email = $1', array($email));
+        db_query($conn, 'DELETE FROM users WHERE email = ?', array($email));
         echo "<script>alert('Failed to send verification email. Please try again.'); history.back();</script>";
     }
 }
-pg_close($conn);
+
+if (DB_CONNECTED) {
+    db_close($conn);
+}
 ?>
