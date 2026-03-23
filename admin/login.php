@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($username) || empty($password)) {
         $error = "Please enter both username and password.";
     } else {
-                // Check if admins table exists
+        // Check if admins table exists
         $table_check = db_query($conn, "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'admins'");
         $table_exists = $table_check ? (int) db_fetch_value($table_check, 0, 0) : 0;
         if ($table_exists === 0) {
@@ -72,12 +72,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 url('../photos/Homepage-Background.avif');
             background-size: cover;
             background-position: center;
-            min-height: 130vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: stretch;
             justify-content: flex-start;
-            
         }
         .login-container {
             width: 100%;
@@ -118,26 +117,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 30px 20px 30px;
+            padding: 30px 20px;
         }
         .login-layout {
             width: 100%;
-            max-width: 1500px;
+            max-width: 1200px;
             display: grid;
             grid-template-columns: 1.1fr 0.9fr;
             gap: 30px;
             align-items: center;
         }
-        @media (max-width: 768px) {
-            .login-hero-text {
+        @media (max-width: 992px) {
+            .login-layout {
+                grid-template-columns: 1fr;
                 text-align: center;
             }
-            .login-hero-text h1 {
-                font-size: 2rem;
+            .login-hero-text {
+                text-align: center;
+                margin-bottom: 2rem;
             }
         }
         .cta-steps {
-            padding: 28px 24px;
+            padding: 40px 24px;
             background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(6px);
         }
@@ -148,13 +149,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .cta-steps h2 {
             font-size: 1.6rem;
             font-weight: 700;
-            margin-bottom: 18px;
+            margin-bottom: 24px;
             color: #0d2137;
         }
         .steps-grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 18px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
         }
         .step-card h3 {
             font-size: 1.05rem;
@@ -180,55 +181,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background: linear-gradient(135deg, #ff6a6a, #c21d6f);
         }
         .admin-login-header {
-            padding: 16px 20px 12px;
+            padding: 16px 20px;
             background: rgba(0, 0, 0, 0.46);
-            border-bottom: 1px solid rgba(109, 106, 106, 0.12);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         .admin-login-inner {
-            max-width: 1100px;
+            max-width: 1200px;
+            margin: 0 auto;
             color: #ffffff;
-            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
             display: flex;
             align-items: center;
             gap: 12px;
         }
         .admin-login-inner img {
-            height: 34px;
+            height: 40px;
             width: auto;
         }
         .admin-brand {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: 700;
         }
         .admin-brand span {
             color: #f5c542;
         }
-        .admin-login-inner h1 {
-            font-size: 1.9rem;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-        .admin-login-inner p {
-            margin: 0;
-            font-size: 0.98rem;
-            opacity: 0.95;
-        }
-        .admin-footer {
-            margin-top: 0 !important;
-        }
-        @media (max-width: 992px) {
-            .login-layout {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
+        @media (max-width: 768px) {
             .steps-grid {
                 grid-template-columns: 1fr;
             }
-            body {
-                padding: 40px 0;
-            }
         }
-</style>
+    </style>
 </head>
 <body>
 
@@ -236,8 +217,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="admin-login-inner">
         <img src="../photos/logo.png" alt="TripNexus Logo">
         <div>
-            <div class="admin-brand">Trip<span>Nexus</span></div>
-            <p>Secure access to manage users, bookings, and content.</p>
+            <div class="admin-brand">Trip<span>Nexus</span> Admin</div>
         </div>
     </div>
 </header>
@@ -253,8 +233,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="login-container">
             <div class="login-header">
                 <i class="fas fa-user-shield"></i>
-                <h3>Admin Panel</h3>
-                <p class="text-muted mb-0 small">Manage bookings, users, and site content securely</p>
+                <h3>Admin Panel Login</h3>
+                <p class="text-muted mb-0 small">Secure access for administrators</p>
             </div>
             
             <?php if ($error): ?>
@@ -263,18 +243,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <form method="POST" action="">
                 <div class="mb-3">
-                    <label class="form-label">access name</label>
-                    <input type="text" name="username" class="form-control" required>
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" class="form-control" required placeholder="Enter username">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">access Password</label>
-                    <input type="password" name="password" class="form-control" required>
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" required placeholder="Enter password">
                 </div>
-                <button type="submit" class="btn btn-primary w-100">Login</button>
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Login to Dashboard</button>
             </form>
             
-            <div class="text-center mt-3">
-                <a href="../index.php" class="text-secondary small">Back to Website</a>
+            <div class="text-center mt-4">
+                <a href="../index.php" class="text-secondary text-decoration-none small">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Website
+                </a>
             </div>
         </div>
     </div>
@@ -282,28 +264,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <section class="cta-steps">
     <div class="cta-inner">
-        <h2>Don't Wait Anymore. Get Started in Just 3 Steps</h2>
+        <h2 class="text-center">Getting Started is Easy</h2>
         <div class="steps-grid">
-            <div class="step-card">
+            <div class="step-card text-center">
                 <div class="step-badge">1</div>
-                <h3>Create Your Account Now</h3>
-                <p>Get started by providing minimal details like employee size, organization name, and preferences.</p>
+                <h3>Configure System</h3>
+                <p>Set up your travel policies and preferences in minutes.</p>
             </div>
-            <div class="step-card">
+            <div class="step-card text-center">
                 <div class="step-badge">2</div>
-                <h3>Set Up Employee-Friendly Policy Guidelines</h3>
-                <p>Define employee-friendly policies to unlock better control and smoother approvals.</p>
+                <h3>Manage Content</h3>
+                <p>Update flights, hotels, and tours with our intuitive tools.</p>
             </div>
-            <div class="step-card">
+            <div class="step-card text-center">
                 <div class="step-badge">3</div>
-                <h3>Invite Your Employees and Start Booking</h3>
-                <p>Invite your team so they can book travel quickly while staying within policy.</p>
+                <h3>Analyze Growth</h3>
+                <p>Monitor bookings and revenue through real-time analytics.</p>
             </div>
         </div>
     </div>
 </section>
-<footer class="bg-dark text-white text-center py-4 admin-footer">
-    <p class="mb-0">© 2026 TripNexus | All Rights Reserved |</p>
+
+<footer class="bg-dark text-white text-center py-4">
+    <p class="mb-0">&copy; 2026 TripNexus | Secure Admin Portal | All Rights Reserved</p>
 </footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

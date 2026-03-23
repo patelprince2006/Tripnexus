@@ -2,13 +2,18 @@
 include '../database/db.php';
 include 'auth_check.php';
 
-// Fetch Statistics
-$users_count = db_fetch_assoc(db_query($conn, "SELECT COUNT(*) as c FROM users"))['c'];
-$bookings_count = db_fetch_assoc(db_query($conn, "SELECT COUNT(*) as c FROM bookings"))['c'];
-$revenue = db_fetch_assoc(db_query($conn, "SELECT SUM(amount) as s FROM payments WHERE payment_status = 'success'"))['s'];
-$hotels_count = db_fetch_assoc(db_query($conn, "SELECT COUNT(*) as c FROM hotels"))['c'];
+// Helper for safe counting
+function get_count($conn, $query, $key = 'c') {
+    $res = db_query($conn, $query);
+    $row = db_fetch_assoc($res);
+    return $row[$key] ?? 0;
+}
 
-if (!$revenue) $revenue = 0;
+// Fetch Statistics safely
+$users_count = get_count($conn, "SELECT COUNT(*) as c FROM users");
+$bookings_count = get_count($conn, "SELECT COUNT(*) as c FROM bookings");
+$revenue = get_count($conn, "SELECT SUM(amount) as s FROM payments WHERE payment_status = 'success'", 's');
+$hotels_count = get_count($conn, "SELECT COUNT(*) as c FROM hotels");
 
 $active_page = 'dashboard';
 include 'includes/header.php';

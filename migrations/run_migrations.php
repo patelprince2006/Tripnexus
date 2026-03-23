@@ -113,7 +113,6 @@ class MigrationRunner {
             if ($statement === '') {
                 continue;
             }
-            echo "Executing: " . substr($statement, 0, 50) . "...\n";
             $result = db_query($this->conn, $statement);
             if (!$result) {
                 $this->results[] = [

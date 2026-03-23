@@ -21,7 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
 
 // Fetch Users
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-if ($search) { $search = db_escape($conn, $search); }
 if ($search) {
     $query = "SELECT * FROM users WHERE fullname LIKE '%$search%' OR email LIKE '%$search%' ORDER BY id DESC";
 } else {
@@ -96,5 +95,3 @@ include 'includes/sidebar.php';
 </div>
 
 <?php include 'includes/footer.php'; ?>
-
-

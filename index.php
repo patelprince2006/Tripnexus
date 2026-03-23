@@ -52,7 +52,7 @@ if ($hotel_city_res) {
     <link rel="stylesheet" href="public/style.css">
 
     <style>
-        /* LOGIN PAGE ONLY - Remove this if not needed */
+        /* LOGIN PAGE ONLY */
         .login-hero {
             background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
                 url('photos/Homepage-Background.avif');
@@ -102,7 +102,11 @@ if ($hotel_city_res) {
 
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top px-4"><a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="index.php"><img src="photos/logo.png" alt="TripNexus Logo" style="height: 40px; width: auto;"><span>Trip<span class="text-warning">Nexus</span></span> </a>
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top px-4">
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="index.php">
+            <img src="photos/logo.png" alt="TripNexus Logo" style="height: 40px; width: auto;">
+            <span>Trip<span class="text-warning">Nexus</span></span>
+        </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
             <span class="navbar-toggler-icon"></span>
@@ -111,21 +115,18 @@ if ($hotel_city_res) {
         <div class="collapse navbar-collapse" id="navMenu">
             <ul class="navbar-nav mx-auto">
                 <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
-
                 <li class="nav-item"><a class="nav-link" href="#about-section">About</a></li>
-
                 <li class="nav-item"><a class="nav-link" href="#contact-section">Contact us</a></li>
             </ul>
 
-            <!-- When user is logged in then this will be exectue -->
             <div class="d-flex align-items-center gap-3 ms-lg-3">
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <div class="dropdown">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <div class="me-2 text-end d-none d-sm-block">
-                                Welcome,<span class="fw-bold"><?php echo htmlspecialchars($_SESSION['fullname']); ?></span>
+                                Welcome, <span class="fw-bold"><?php echo htmlspecialchars($_SESSION['fullname']); ?></span>
                             </div>
-                            <div class="rounded-circle bg-whi d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border: 2px solid black;">
+                            <div class="rounded-circle bg-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border: 2px solid black;">
                                 <i class="bi bi-person-fill text-dark fs-5"></i>
                             </div>
                         </a>
@@ -219,7 +220,7 @@ if ($hotel_city_res) {
                                         <input type="date" name="departure_date" id="flightDepartureDate" class="border-0 w-100 fw-bold" style="background: none;" required>
                                     </div>
 
-                                    <div class="search-input-group px-3 py-2" style="min-width: 150px;" id="flightReturnDateGroup">
+                                    <div class="search-input-group px-3 py-2" style="min-width: 150px;" id="flightReturnDateGroup" style="display: none;">
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1">Return</label>
                                         <input type="date" name="return_date" id="flightReturnDate" class="border-0 w-100 fw-bold" style="background: none;">
                                     </div>
@@ -284,7 +285,7 @@ if ($hotel_city_res) {
                                     </div>
 
 
-                                    <div class="search-input-group px-3 py-2" style="min-width: 150px;" id="busReturnDateGroup">
+                                    <div class="search-input-group px-3 py-2" style="min-width: 150px;" id="busReturnDateGroup" style="display: none;">
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1">Return</label>
                                         <input type="date" name="return_date" id="busReturnDate" class="border-0 w-100 fw-bold" style="background: none;">
                                     </div>
@@ -327,7 +328,6 @@ if ($hotel_city_res) {
                                     <div class="search-input-group px-3 py-2" style="min-width: 200px;">
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-calendar-event text-info me-1"></i>Journey Date</label>
                                         <input type="date" name="train_date" class="border-0 w-100 fw-bold" required>
-                                        <!-- <div class="small text-muted">Select Date</div> -->
                                     </div>
                                     <button type="submit" class="btn btn-info btn-search rounded-pill px-5 py-3 ms-2 fw-bold text-white shadow-lg">
                                         Search Train
@@ -386,7 +386,6 @@ if ($hotel_city_res) {
         <div class="row g-4">
             <div class="col-12 col-sm-6 col-md-3">
                 <div class="card h-100 shadow-sm border-0">
-                    <!-- <img src="https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=400&q=80" -->
                     <img src="photos/Manali2.jpg" class="card-img-top" alt="Manali">
                     <div class="card-body">
                         <h5 class="card-title fw-bold">Manali</h5>
@@ -396,7 +395,6 @@ if ($hotel_city_res) {
             </div>
             <div class="col-12 col-sm-6 col-md-3">
                 <div class="card h-100 shadow-sm border-0">
-                    <!-- <img src="https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400&q=80" -->
                     <img src="photos/Agra.jpg" class="card-img-top" alt="Agra">
                     <div class="card-body">
                         <h5 class="card-title fw-bold">Agra</h5>
@@ -406,7 +404,6 @@ if ($hotel_city_res) {
             </div>
             <div class="col-12 col-sm-6 col-md-3">
                 <div class="card h-100 shadow-sm border-0">
-                    <!-- <img src="https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400&q=80" -->
                     <img src="photos/Goa.jpg" class="card-img-top" alt="Goa">
                     <div class="card-body">
                         <h5 class="card-title fw-bold">Goa</h5>
@@ -416,7 +413,6 @@ if ($hotel_city_res) {
             </div>
             <div class="col-12 col-sm-6 col-md-3">
                 <div class="card h-100 shadow-sm border-0">
-                    <!-- <img src="https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=400&q=80" -->
                     <img src="photos/Mumbai.jpg" class="card-img-top" alt="Mumbai">
                     <div class="card-body">
                         <h5 class="card-title fw-bold">Mumbai</h5>
@@ -442,34 +438,6 @@ if ($hotel_city_res) {
             </div>
         </div>
     </section>
-
-    <!-- <section id="contact-section" class="container my-5 py-5">
-        <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h2 class="fw-bold mb-4">Contact Us</h2>
-                <p class="text-muted mb-4">Have questions about your next adventure? Our team at TripNexus is here to
-                    help you 24/7.</p>
-
-                <form>
-                    <div class="mb-3">
-                        <input type="text" class="form-control" placeholder="Your Name" required>
-                    </div>
-                    <div class="mb-3">
-                        <input type="email" class="form-control" placeholder="Email Address" required>
-                    </div>
-                    <div class="mb-3">
-                        <textarea class="form-control" rows="4" placeholder="Your Message" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-warning fw-bold px-4">Send Message</button>
-                </form>
-            </div>
-
-            <div class="col-lg-6 text-center mt-4 mt-lg-0">
-                <img src="https://images.unsplash.com/photo-1534536281715-e28d76689b4d?w=800&q=90"
-                    class="img-fluid rounded shadow" alt="Contact TripNexus">
-            </div>
-        </div>
-    </section> -->
 
     <section id="contact-section" class="container my-5 py-5">
         <div class="text-center mb-5">
@@ -542,14 +510,19 @@ if ($hotel_city_res) {
         </div>
     </section>
 
-    <footer class="bg-dark text-white text-center py-4">
+    <footer class="bg-dark text-white text-center py-4 mt-5">
         <p class="mb-0">&copy; 2026 TripNexus | All Rights Reserved | <a href="admin/login.php" class="text-white-50 text-decoration-none small">Admin</a></p>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
     <script src="public/script.js"></script>
+    <script>
+        function toggleFlightReturn(show) {
+            document.getElementById('flightReturnDateGroup').style.display = show ? 'block' : 'none';
+        }
+        function toggleBusReturn(show) {
+            document.getElementById('busReturnDateGroup').style.display = show ? 'block' : 'none';
+        }
+    </script>
 </body>
-
 </html>
-
