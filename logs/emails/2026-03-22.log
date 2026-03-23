@@ -1,0 +1,9 @@
+16:20:18 | success | testuser3@example.com | Email sent successfully
+16:21:54 | success | testuser4@example.com | Email sent successfully
+16:35:22 | success | debuguser_unique_123@example.com | Email sent successfully
+17:07:44 | error | codex_unique_1774195664@example.com | Failed to connect to SMTP server
+17:08:23 | error | codex_unique_1774195703@example.com | Failed to connect to SMTP server
+17:10:49 | success | livecheck_1774195845@example.com | Email sent successfully
+17:10:50 | success | livecheck_1774195844@example.com | Email sent successfully
+17:11:03 | success | livecheck_1774195858@example.com | Email sent successfully
+17:11:26 | success | finalcheck_1774195881@example.com | Email sent successfully
