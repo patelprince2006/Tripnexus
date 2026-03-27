@@ -64,7 +64,9 @@ include 'includes/sidebar.php';
                     <p class="mb-2"><span class="badge bg-primary"><?php echo $row['duration']; ?> Days</span></p>
                     <h5 class="text-success mb-3">₹<?php echo number_format($row['price']); ?></h5>
                     
-                    <button class="btn btn-sm btn-info w-100 mb-2" onclick='editTour(<?php echo json_encode($row); ?>)'>Edit Details</button>
+                    <button class="btn btn-sm btn-info w-100 mb-2" onclick='editTour(<?php echo json_encode($row); ?>)'>Edit Basic Info</button>
+                    <a href="tour_schedules.php?tour_id=<?php echo $row['id']; ?>" class="btn btn-sm btn-warning w-100 mb-2">Manage Schedules</a>
+                    <a href="tour_itinerary.php?tour_id=<?php echo $row['id']; ?>" class="btn btn-sm btn-success w-100 mb-2">Manage Itinerary</a>
                     <form method="POST" onsubmit="return confirm('Delete this package?');">
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="tour_id" value="<?php echo $row['id']; ?>">

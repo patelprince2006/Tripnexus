@@ -37,6 +37,24 @@ if ($hotel_city_res) {
         $hotel_cities[] = $hc['city'];
     }
 }
+
+// Prepare tour locations
+$tour_locations = [];
+$tour_loc_res = db_query($conn, "SELECT DISTINCT location FROM tour_packages ORDER BY location ASC");
+if ($tour_loc_res) {
+    while ($tl = db_fetch_assoc($tour_loc_res)) {
+        $tour_locations[] = $tl['location'];
+    }
+}
+
+// Fetch popular tours
+$popular_tours = [];
+$popular_tours_res = db_query($conn, "SELECT * FROM tour_packages LIMIT 4");
+if ($popular_tours_res) {
+    while ($pt = db_fetch_assoc($popular_tours_res)) {
+        $popular_tours[] = $pt;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -162,6 +180,8 @@ if ($hotel_city_res) {
                                 class="bi bi-train-front me-2"></i>Train</button></li>
                     <li class="nav-item"><button class="nav-link" data-bs-toggle="pill"
                             data-bs-target="#pills-hotels"><i class="bi bi-building me-2"></i>Hotel</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill"
+                            data-bs-target="#pills-tours"><i class="bi bi-globe-americas me-2"></i>Tour</button></li>
                 </ul>
 
                 <div class="tab-content" id="pills-tabContent">
@@ -185,7 +205,7 @@ if ($hotel_city_res) {
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1">
                                             <i class="bi bi-geo-alt-fill text-primary me-1"></i>From
                                         </label>
-                                        <select name="departure_city" class="border-0 w-100 fw-bold" style="background: none;" required>
+                                        <select name="departure_city" id="flightFrom" class="border-0 w-100 fw-bold" style="background: none;" required>
                                             <option value="">Select</option>
                                             <?php foreach ($airports as $ap): ?>
                                                 <option value="<?php echo $ap['airport_code']; ?>">
@@ -205,7 +225,7 @@ if ($hotel_city_res) {
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1">
                                             <i class="bi bi-geo-alt-fill text-primary me-1"></i>To
                                         </label>
-                                        <select name="arrival_city" class="border-0 w-100 fw-bold" style="background: none;" required>
+                                        <select name="arrival_city" id="flightTo" class="border-0 w-100 fw-bold" style="background: none;" required>
                                             <option value="">Select</option>
                                             <?php foreach ($airports as $ap): ?>
                                                 <option value="<?php echo $ap['airport_code']; ?>">
@@ -309,20 +329,61 @@ if ($hotel_city_res) {
                                 <div class="modern-search-bar p-2 d-flex flex-wrap align-items-center">
                                     <div class="search-input-group border-end flex-grow-1 px-3 py-2">
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-train-front-fill text-info me-1"></i>From Station</label>
-                                        <select name="train_from" class="border-0 w-100 fw-bold" style="background: none;" required>
-                                            <option value="">Select</option>
-                                            <?php foreach ($train_stations as $st): ?>
-                                                <option value="<?php echo htmlspecialchars($st); ?>"><?php echo htmlspecialchars($st); ?></option>
-                                            <?php endforeach; ?>
+                                        <select name="train_from" id="trainFrom" class="border-0 w-100 fw-bold" style="background: none;" required>
+                                            <option value="">Select Station</option>
+                                            <option value="NDLS">New Delhi (NDLS)</option>
+                                            <option value="BCT">Mumbai Central (BCT)</option>
+                                            <option value="MAS">Chennai Central (MAS)</option>
+                                            <option value="HWH">Howrah (HWH)</option>
+                                            <option value="SBC">Bangalore (SBC)</option>
+                                            <option value="HYB">Hyderabad (HYB)</option>
+                                            <option value="PUNE">Pune (PUNE)</option>
+                                            <option value="JAI">Jaipur (JAI)</option>
+                                            <option value="AMD">Ahmedabad (AMD)</option>
+                                            <option value="LKO">Lucknow (LKO)</option>
+                                            <option value="PNBE">Patna (PNBE)</option>
+                                            <option value="BPL">Bhopal (BPL)</option>
+                                            <option value="INDB">Indore (INDB)</option>
+                                            <option value="VSKP">Visakhapatnam (VSKP)</option>
+                                            <option value="GHY">Guwahati (GHY)</option>
+                                            <option value="AGC">Agra Cantt (AGC)</option>
+                                            <option value="BSB">Varanasi (BSB)</option>
+                                            <option value="CNB">Kanpur Central (CNB)</option>
+                                            <option value="MYS">Mysuru (MYS)</option>
+                                            <option value="CBE">Coimbatore (CBE)</option>
                                         </select>
                                     </div>
+
+                                    <div class="search-swap-btn">
+                                        <button type="button" class="btn btn-light rounded-circle shadow-sm border" onclick="swapTrainLocations()">
+                                            <i class="bi bi-arrow-left-right text-info"></i>
+                                        </button>
+                                    </div>
+
                                     <div class="search-input-group border-end flex-grow-1 px-3 py-2">
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-geo-alt-fill text-info me-1"></i>To Station</label>
-                                        <select name="train_to" class="border-0 w-100 fw-bold" style="background: none;" required>
-                                            <option value="">Select</option>
-                                            <?php foreach ($train_stations as $st): ?>
-                                                <option value="<?php echo htmlspecialchars($st); ?>"><?php echo htmlspecialchars($st); ?></option>
-                                            <?php endforeach; ?>
+                                        <select name="train_to" id="trainTo" class="border-0 w-100 fw-bold" style="background: none;" required>
+                                            <option value="">Select Station</option>
+                                            <option value="NDLS">New Delhi (NDLS)</option>
+                                            <option value="BCT">Mumbai Central (BCT)</option>
+                                            <option value="MAS">Chennai Central (MAS)</option>
+                                            <option value="HWH">Howrah (HWH)</option>
+                                            <option value="SBC">Bangalore (SBC)</option>
+                                            <option value="HYB">Hyderabad (HYB)</option>
+                                            <option value="PUNE">Pune (PUNE)</option>
+                                            <option value="JAI">Jaipur (JAI)</option>
+                                            <option value="AMD">Ahmedabad (AMD)</option>
+                                            <option value="LKO">Lucknow (LKO)</option>
+                                            <option value="PNBE">Patna (PNBE)</option>
+                                            <option value="BPL">Bhopal (BPL)</option>
+                                            <option value="INDB">Indore (INDB)</option>
+                                            <option value="VSKP">Visakhapatnam (VSKP)</option>
+                                            <option value="GHY">Guwahati (GHY)</option>
+                                            <option value="AGC">Agra Cantt (AGC)</option>
+                                            <option value="BSB">Varanasi (BSB)</option>
+                                            <option value="CNB">Kanpur Central (CNB)</option>
+                                            <option value="MYS">Mysuru (MYS)</option>
+                                            <option value="CBE">Coimbatore (CBE)</option>
                                         </select>
                                     </div>
                                     <div class="search-input-group px-3 py-2" style="min-width: 200px;">
@@ -376,6 +437,42 @@ if ($hotel_city_res) {
                             </div>
                         </form>
                     </div>
+
+                    <!-- Tour Search -->
+                    <div class="tab-pane fade" id="pills-tours" role="tabpanel">
+                        <form method="POST" action="tours/search_tour.php">
+                            <div class="modern-search-wrapper shadow-lg">
+                                <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
+                                    <span><i class="bi bi-star-fill text-success"></i> Group Tours</span>
+                                    <span><i class="bi bi-star-fill text-success"></i> Private Tours</span>
+                                    <span><i class="bi bi-star-fill text-success"></i> Adventure</span>
+                                </div>
+                                <div class="modern-search-bar p-2 d-flex flex-wrap align-items-center">
+                                    <div class="search-input-group border-end flex-grow-1 px-3 py-2">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-geo-alt-fill text-success me-1"></i>Where to?</label>
+                                        <select name="tour_location" class="border-0 w-100 fw-bold" style="background: none;" required>
+                                            <option value="">Select Location</option>
+                                            <?php foreach ($tour_locations as $tl): ?>
+                                                <option value="<?php echo htmlspecialchars($tl); ?>"><?php echo htmlspecialchars($tl); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <div class="small text-muted">Destination city or country</div>
+                                    </div>
+                                    <div class="search-input-group border-end px-3 py-2" style="min-width: 200px;">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-calendar-event text-success me-1"></i>Travel Date</label>
+                                        <input type="date" name="tour_date" class="border-0 w-100 fw-bold" required>
+                                    </div>
+                                    <div class="search-input-group px-3 py-2" style="min-width: 150px;">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-people-fill text-success me-1"></i>Persons</label>
+                                        <input type="number" name="passengers" class="border-0 w-100 fw-bold" value="1" min="1">
+                                    </div>
+                                    <button type="submit" class="btn btn-success btn-search rounded-pill px-5 py-3 ms-2 fw-bold text-white shadow-lg">
+                                        Search Tours
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -420,6 +517,44 @@ if ($hotel_city_res) {
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- Popular Tour Packages -->
+    <section class="container my-5">
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h2 class="fw-bold mb-0">Exclusive Tour Packages</h2>
+                <p class="text-muted mb-0">Handpicked adventures for your next trip</p>
+            </div>
+            <a href="tours/search_tour.php" class="btn btn-outline-success rounded-pill px-4">View All Tours</a>
+        </div>
+        <div class="row g-4">
+            <?php foreach ($popular_tours as $tour): ?>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="card h-100 shadow-sm border-0 tour-card overflow-hidden">
+                        <div class="position-relative">
+                            <img src="<?php echo !empty($tour['main_image']) ? htmlspecialchars($tour['main_image']) : 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=500&q=80'; ?>" class="card-img-top" alt="<?php echo htmlspecialchars($tour['name']); ?>" style="height: 200px; object-fit: cover;">
+                            <div class="position-absolute top-0 end-0 m-3">
+                                <span class="badge bg-white text-dark shadow-sm rounded-pill px-3 py-2">
+                                    <i class="bi bi-clock me-1 text-success"></i> <?php echo htmlspecialchars($tour['duration']); ?> Days
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="text-muted small mb-2"><i class="bi bi-geo-alt-fill text-success me-1"></i><?php echo htmlspecialchars($tour['location']); ?></div>
+                            <h5 class="card-title fw-bold mb-3"><?php echo htmlspecialchars($tour['name']); ?></h5>
+                            <div class="d-flex justify-content-between align-items-center mt-auto">
+                                <div>
+                                    <div class="small text-muted">Starting from</div>
+                                    <div class="fw-bold text-success fs-5">₹<?php echo number_format($tour['price'], 2); ?></div>
+                                </div>
+                                <a href="tours/booking.php?id=<?php echo $tour['id']; ?>" class="btn btn-success rounded-pill px-4">Book Now</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
         </div>
     </section>
 
@@ -522,6 +657,14 @@ if ($hotel_city_res) {
         }
         function toggleBusReturn(show) {
             document.getElementById('busReturnDateGroup').style.display = show ? 'block' : 'none';
+        }
+
+        function swapTrainLocations() {
+            const from = document.getElementById('trainFrom');
+            const to = document.getElementById('trainTo');
+            const temp = from.value;
+            from.value = to.value;
+            to.value = temp;
         }
     </script>
 </body>

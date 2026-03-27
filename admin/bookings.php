@@ -8,9 +8,6 @@ if (db_num_rows($check_col) == 0) {
     db_query($conn, "ALTER TABLE bookings ADD COLUMN total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00 AFTER status");
 }
 
-include '../db.php';
-include 'auth_check.php';
-
 // Handle Status Updates
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] == 'update_status') {

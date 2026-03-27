@@ -38,21 +38,76 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $to = $_POST['arrival_city'];
     $travel_date = $_POST['departure_date'];
 
-    // Primary search: exact date match
-    $search_query = "SELECT f.*, a.airline_name, a.airline_logo 
-                    FROM flights f 
-                    JOIN airlines a ON f.airline_id = a.airline_id 
-                    WHERE f.departure_airport = ? 
-                    AND f.arrival_airport = ? 
-                    AND DATE(f.departure_time) = ?
-                    ORDER BY f.departure_time ASC";
+    // --- Start Aviationstack API Integration ---
+    $api_key = '43d6ed9d3d1efaf98d93001258955183';
+    $api_url = "http://api.aviationstack.com/v1/flights?access_key=$api_key&dep_iata=$from&arr_iata=$to";
 
-    $res = db_query($conn, $search_query, array($from, $to, $travel_date));
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $api_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    $response = curl_exec($ch);
+    curl_close($ch);
 
-    if ($res) {
-        while ($row = db_fetch_assoc($res)) {
-            $row['rating'] = rand(35, 50) / 10;
-            $results[] = $row;
+    $api_data = json_decode($response, true);
+
+    if (isset($api_data['data']) && !empty($api_data['data'])) {
+        foreach ($api_data['data'] as $f) {
+            if (!isset($f['flight']['iata']) || empty($f['flight']['iata'])) continue;
+
+            $f_num = $f['flight']['iata'];
+            $airline_name = $f['airline']['name'];
+            $dep_time = date('Y-m-d H:i:s', strtotime($f['departure']['scheduled']));
+            $arr_time = date('Y-m-d H:i:s', strtotime($f['arrival']['scheduled']));
+
+            // Sync with local database to allow booking
+            $airline_res = db_query($conn, "SELECT airline_id FROM airlines WHERE airline_name = ?", [$airline_name]);
+            $airline = db_fetch_assoc($airline_res);
+            if (!$airline) {
+                db_query($conn, "INSERT INTO airlines (airline_name, airline_logo) VALUES (?, ?)", [$airline_name, '../photos/indigo.jpg']);
+                $airline_id = mysqli_insert_id($conn);
+            } else {
+                $airline_id = $airline['airline_id'];
+            }
+
+            $flight_res = db_query($conn, "SELECT flight_id FROM flights WHERE flight_number = ? AND departure_time = ?", [$f_num, $dep_time]);
+            $flight = db_fetch_assoc($flight_res);
+            
+            if (!$flight) {
+                $base_price = rand(4500, 15000); 
+                db_query($conn, "INSERT INTO flights (flight_number, airline_id, departure_airport, arrival_airport, departure_time, arrival_time, base_price, available_seats, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                    [$f_num, $airline_id, $from, $to, $dep_time, $arr_time, $base_price, rand(30, 120), 'scheduled']);
+                $flight_id = mysqli_insert_id($conn);
+            } else {
+                $flight_id = $flight['flight_id'];
+            }
+
+            $final_res = db_query($conn, "SELECT f.*, a.airline_name, a.airline_logo FROM flights f JOIN airlines a ON f.airline_id = a.airline_id WHERE f.flight_id = ?", [$flight_id]);
+            if ($row = db_fetch_assoc($final_res)) {
+                $row['rating'] = rand(35, 50) / 10;
+                $results[] = $row;
+            }
+        }
+    }
+
+    // Fallback if API returned no data
+    if (empty($results)) {
+        // Primary search: exact date match
+        $search_query = "SELECT f.*, a.airline_name, a.airline_logo 
+                        FROM flights f 
+                        JOIN airlines a ON f.airline_id = a.airline_id 
+                        WHERE f.departure_airport = ? 
+                        AND f.arrival_airport = ? 
+                        AND DATE(f.departure_time) = ?
+                        ORDER BY f.departure_time ASC";
+
+        $res = db_query($conn, $search_query, array($from, $to, $travel_date));
+
+        if ($res) {
+            while ($row = db_fetch_assoc($res)) {
+                $row['rating'] = rand(35, 50) / 10;
+                $results[] = $row;
+            }
         }
     }
 

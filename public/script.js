@@ -222,13 +222,37 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Swaps the values between From and To inputs
+// Swaps the values between From and To inputs for Flights
 function swapLocations() {
-    const from = document.getElementById('fromInput');
-    const to = document.getElementById('toInput');
-    const temp = from.value || from.placeholder;
-    from.value = to.value || to.placeholder;
-    to.value = temp;
+    const from = document.getElementById('flightFrom');
+    const to = document.getElementById('flightTo');
+    if (from && to) {
+        const temp = from.value;
+        from.value = to.value;
+        to.value = temp;
+    }
+}
+
+// Swaps the values between From and To inputs for Buses
+function swapBusLocations() {
+    const from = document.getElementById('busFrom');
+    const to = document.getElementById('busTo');
+    if (from && to) {
+        const temp = from.value;
+        from.value = to.value;
+        to.value = temp;
+    }
+}
+
+// Swaps the values between From and To inputs for Trains
+function swapTrainLocations() {
+    const from = document.getElementById('trainFrom');
+    const to = document.getElementById('trainTo');
+    if (from && to) {
+        const temp = from.value;
+        from.value = to.value;
+        to.value = temp;
+    }
 }
 
 // Enforce date inputs to start from today

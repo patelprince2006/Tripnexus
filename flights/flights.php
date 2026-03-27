@@ -16,8 +16,8 @@ $error_message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $search_performed = true;
     
-    $departure = isset($_POST['departure']) ? db_escape($conn, $_POST['departure']) : '';
-    $arrival = isset($_POST['arrival']) ? db_escape($conn, $_POST['arrival']) : '';
+    $departure = isset($_POST['departure']) ? mysqli_real_escape_string($conn, $_POST['departure']) : '';
+    $arrival = isset($_POST['arrival']) ? mysqli_real_escape_string($conn, $_POST['arrival']) : '';
     $departure_date = isset($_POST['departure_date']) ? $_POST['departure_date'] : '';
     $passengers = isset($_POST['passengers']) ? intval($_POST['passengers']) : 1;
     
@@ -27,7 +27,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($departure === $arrival) {
         $error_message = "Departure and arrival airports must be different.";
     } else {
-        // Query flights based on search criteria
+        // --- Start Aviationstack API Integration ---
+        $api_key = '43d6ed9d3d1efaf98d93001258955183';
+        $api_url = "http://api.aviationstack.com/v1/flights?access_key=$api_key&dep_iata=$departure&arr_iata=$arrival";
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $api_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        $api_data = json_decode($response, true);
+
+        if (isset($api_data['data']) && !empty($api_data['data'])) {
+            foreach ($api_data['data'] as $f) {
+                if (!isset($f['flight']['iata']) || empty($f['flight']['iata'])) continue;
+
+                $f_num = $f['flight']['iata'];
+                $airline_name = $f['airline']['name'];
+                $dep_time = date('Y-m-d H:i:s', strtotime($f['departure']['scheduled']));
+                $arr_time = date('Y-m-d H:i:s', strtotime($f['arrival']['scheduled']));
+
+                // Sync with local database to allow booking
+                $airline_res = db_query($conn, "SELECT airline_id FROM airlines WHERE airline_name = ?", [$airline_name]);
+                $airline = db_fetch_assoc($airline_res);
+                if (!$airline) {
+                    db_query($conn, "INSERT INTO airlines (airline_name, airline_logo) VALUES (?, ?)", [$airline_name, '../photos/indigo.jpg']);
+                    $airline_id = mysqli_insert_id($conn);
+                } else {
+                    $airline_id = $airline['airline_id'];
+                }
+
+                $flight_res = db_query($conn, "SELECT flight_id FROM flights WHERE flight_number = ? AND departure_time = ?", [$f_num, $dep_time]);
+                $flight = db_fetch_assoc($flight_res);
+                
+                if (!$flight) {
+                    $base_price = rand(4500, 15000); 
+                    db_query($conn, "INSERT INTO flights (flight_number, airline_id, departure_airport, arrival_airport, departure_time, arrival_time, base_price, available_seats, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                        [$f_num, $airline_id, $departure, $arrival, $dep_time, $arr_time, $base_price, rand(30, 120), 'scheduled']);
+                }
+            }
+        }
+
+        // Query flights based on search criteria (this will now include API-synced flights)
         $query = "
             SELECT 
                 f.flight_id,
@@ -61,7 +104,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$result) {
             $error_message = "Database error: " . db_last_error($conn);
         } else {
-            $flights = db_fetch_all($result);
+            // Fetch all results using mysqli_fetch_all if available, or manual loop
+            $flights = [];
+            while ($row = db_fetch_assoc($result)) {
+                $flights[] = $row;
+            }
         }
     }
 }
