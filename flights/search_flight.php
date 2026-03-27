@@ -30,6 +30,7 @@ $search_note = null;
 $travel_date = date('Y-m-d');
 $from = '';
 $to = '';
+$sort_price = $_POST['sort_price'] ?? '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $from = $_POST['departure_city'];
@@ -131,6 +132,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     $search_performed = true;
+
+    // Apply Sorting
+    if (!empty($results) && !empty($sort_price)) {
+        usort($results, function($a, $b) use ($sort_price) {
+            if ($sort_price === 'low_to_high') {
+                return $a['base_price'] <=> $b['base_price'];
+            } elseif ($sort_price === 'high_to_low') {
+                return $b['base_price'] <=> $a['base_price'];
+            }
+            return 0;
+        });
+    }
 } else {
     // Recommendation System: Show personalized or popular flights
     $rec_flights = [];
@@ -378,9 +391,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     </select>
                                 </div>
 
-                                <div class="search-input-group border-end px-3 py-2" style="min-width: 200px;">
+                                <div class="search-input-group border-end px-3 py-2" style="min-width: 180px;">
                                     <label class="d-block small text-uppercase fw-bold text-muted mb-1">Departure Date</label>
                                     <input type="date" name="departure_date" id="flightDepartureDate" class="border-0 w-100 fw-bold" style="background: none;" value="<?php echo $travel_date; ?>" min="<?php echo date('Y-m-d'); ?>" required>
+                                </div>
+
+                                <div class="search-input-group border-end px-3 py-2" style="min-width: 180px;">
+                                    <label class="d-block small text-uppercase fw-bold text-muted mb-1">Price Filter</label>
+                                    <select name="sort_price" id="sortPrice" class="border-0 w-100 fw-bold" style="background: none;" onchange="this.form.submit()">
+                                        <option value="">Default Sort</option>
+                                        <option value="low_to_high" <?php echo ($sort_price === 'low_to_high') ? 'selected' : ''; ?>>Price: Low to High</option>
+                                        <option value="high_to_low" <?php echo ($sort_price === 'high_to_low') ? 'selected' : ''; ?>>Price: High to Low</option>
+                                    </select>
                                 </div>
 
                                 <button type="submit" class="btn btn-primary btn-search rounded-pill px-5 py-3 ms-2 fw-bold text-white shadow-lg">

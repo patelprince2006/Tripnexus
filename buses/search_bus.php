@@ -15,10 +15,10 @@ if (isset($_SESSION['user_id'])) {
 
 // Load bus locations from DB for dropdowns
 $locations = [];
-$loc_res = db_query($conn, "SELECT DISTINCT from_location as loc FROM buses UNION SELECT DISTINCT to_location as loc FROM buses ORDER BY loc ASC");
+$loc_res = db_query($conn, "SELECT city_name FROM bus_locations ORDER BY city_name ASC");
 if ($loc_res) {
     while ($loc = db_fetch_assoc($loc_res)) {
-        $locations[] = $loc['loc'];
+        $locations[] = $loc['city_name'];
     }
 }
 
@@ -28,6 +28,7 @@ $from = '';
 $to = '';
 $date = date('Y-m-d');
 $trip_type = 'oneWay';
+$sort_price = $_POST['sort_price'] ?? '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $trip_type = $_POST['trip_type'] ?? 'oneWay';
@@ -48,6 +49,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
     $search_performed = true;
+
+    // Apply Sorting
+    if (!empty($results) && !empty($sort_price)) {
+        usort($results, function($a, $b) use ($sort_price) {
+            if ($sort_price === 'low_to_high') {
+                return $a['price'] <=> $b['price'];
+            } elseif ($sort_price === 'high_to_low') {
+                return $b['price'] <=> $a['price'];
+            }
+            return 0;
+        });
+    }
 } else {
     // Recommendation System: Show personalized or popular buses
     $is_personalized = false;
@@ -189,9 +202,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </select>
                         </div>
 
-                        <div class="search-input-group border-end px-3 py-2" style="min-width: 200px;">
+                        <div class="search-input-group border-end px-3 py-2" style="min-width: 180px;">
                             <label class="d-block small text-uppercase fw-bold text-muted mb-1">Departure Date</label>
                             <input type="date" name="bus_date" id="busDepartureDate" class="border-0 w-100 fw-bold" style="background: none;" value="<?php echo $date; ?>" min="<?php echo date('Y-m-d'); ?>" required>
+                        </div>
+
+                        <div class="search-input-group border-end px-3 py-2" style="min-width: 150px;">
+                            <label class="d-block small text-uppercase fw-bold text-muted mb-1">Price Filter</label>
+                            <select name="sort_price" id="sortPrice" class="border-0 w-100 fw-bold" style="background: none;" onchange="this.form.submit()">
+                                <option value="">Default</option>
+                                <option value="low_to_high" <?php echo ($sort_price === 'low_to_high') ? 'selected' : ''; ?>>Low to High</option>
+                                <option value="high_to_low" <?php echo ($sort_price === 'high_to_low') ? 'selected' : ''; ?>>High to Low</option>
+                            </select>
                         </div>
 
                         <button type="submit" class="btn btn-danger btn-search rounded-pill px-5 py-3 ms-2 fw-bold text-white shadow-lg">

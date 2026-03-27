@@ -28,6 +28,7 @@ $city = '';
 $check_in = date('Y-m-d');
 $check_out = date('Y-m-d', strtotime('+1 day'));
 $guests = 1;
+$sort_price = $_POST['sort_price'] ?? '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $city = $_POST['hotel_city'];
@@ -105,6 +106,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
     $search_performed = true;
+
+    // Apply Sorting
+    if (!empty($results) && !empty($sort_price)) {
+        usort($results, function($a, $b) use ($sort_price) {
+            if ($sort_price === 'low_to_high') {
+                return $a['price_per_night'] <=> $b['price_per_night'];
+            } elseif ($sort_price === 'high_to_low') {
+                return $b['price_per_night'] <=> $a['price_per_night'];
+            }
+            return 0;
+        });
+    }
 } else {
     // Recommendation System: Show personalized or featured hotels
     $is_personalized = false;
@@ -274,6 +287,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <?php echo $g; ?> Guest<?php echo $g > 1 ? 's' : ''; ?>
                                     </option>
                                 <?php endfor; ?>
+                            </select>
+                        </div>
+                        <div class="search-input-group px-3 py-2" style="min-width: 140px;">
+                            <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-filter text-warning me-1"></i>Price Sort</label>
+                            <select name="sort_price" class="border-0 w-100 fw-bold" style="background: none;" onchange="this.form.submit()">
+                                <option value="">Default</option>
+                                <option value="low_to_high" <?php echo ($sort_price === 'low_to_high') ? 'selected' : ''; ?>>Low to High</option>
+                                <option value="high_to_low" <?php echo ($sort_price === 'high_to_low') ? 'selected' : ''; ?>>High to Low</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-warning btn-search rounded-pill px-4 py-3 ms-2 fw-bold shadow-lg">

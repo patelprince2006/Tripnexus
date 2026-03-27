@@ -64,6 +64,7 @@ $search_performed = false;
 $from = '';
 $to = '';
 $date = date('Y-m-d');
+$sort_price = $_POST['sort_price'] ?? '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $from = $_POST['train_from'] ?? '';
@@ -176,24 +177,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // --- Primary Local Search (Always runs as fallback or primary) ---
-    // Map comprehensive station codes to names for the local DB
-    $station_map = [
-        'NDLS' => 'Delhi', 'BCT' => 'Mumbai', 'SBC' => 'Bangalore', 
-        'AMD' => 'Ahmedabad', 'BPL' => 'Bhopal', 'MAS' => 'Chennai',
-        'HWH' => 'Howrah', 'HYB' => 'Hyderabad', 'PUNE' => 'Pune', 
-        'JAI' => 'Jaipur', 'LKO' => 'Lucknow', 'PNBE' => 'Patna',
-        'INDB' => 'Indore', 'VSKP' => 'Visakhapatnam', 'GHY' => 'Guwahati',
-        'AGC' => 'Agra', 'BSB' => 'Varanasi', 'CNB' => 'Kanpur',
-        'MYS' => 'Mysuru', 'CBE' => 'Coimbatore', 'ND' => 'Nadiad',
-    ];
-    $from_name = $station_map[$from] ?? $from;
-    $to_name = $station_map[$to] ?? $to;
+    // Fetch station details from train_stations table to improve search accuracy
+    $from_details = db_fetch_assoc(db_query($conn, "SELECT city, station_name FROM train_stations WHERE station_code = ?", [$from]));
+    $to_details = db_fetch_assoc(db_query($conn, "SELECT city, station_name FROM train_stations WHERE station_code = ?", [$to]));
+    
+    $from_name = $from_details ? $from_details['city'] : $from;
+    $from_st_name = $from_details ? $from_details['station_name'] : $from;
+    $to_name = $to_details ? $to_details['city'] : $to;
+    $to_st_name = $to_details ? $to_details['station_name'] : $to;
 
     $local_query = "SELECT * FROM trains 
-                    WHERE (from_station LIKE ? OR from_station LIKE ?) 
-                    AND (to_station LIKE ? OR to_station LIKE ?)
+                    WHERE (from_station LIKE ? OR from_station LIKE ? OR from_station LIKE ?) 
+                    AND (to_station LIKE ? OR to_station LIKE ? OR to_station LIKE ?)
                     ORDER BY departure_time ASC";
-    $local_res = db_query($conn, $local_query, array("%$from_name%", "%$from%", "%$to_name%", "%$to%"));
+    $local_res = db_query($conn, $local_query, array("%$from_name%", "%$from%", "%$from_st_name%", "%$to_name%", "%$to%", "%$to_st_name%"));
 
     if ($local_res) {
         while ($row = db_fetch_assoc($local_res)) {
@@ -216,6 +213,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     
     $search_performed = true;
+
+    // Apply Sorting
+    if (!empty($results) && !empty($sort_price)) {
+        usort($results, function($a, $b) use ($sort_price) {
+            if ($sort_price === 'low_to_high') {
+                return $a['price'] <=> $b['price'];
+            } elseif ($sort_price === 'high_to_low') {
+                return $b['price'] <=> $a['price'];
+            }
+            return 0;
+        });
+    }
 } else {
     // Recommendation System: Show personalized or popular trains
     $is_personalized = false;
@@ -403,9 +412,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="search-input-group px-3 py-2" style="min-width: 200px;">
+                        <div class="search-input-group border-end px-3 py-2" style="min-width: 150px;">
                             <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-calendar-event text-info me-1"></i>Journey Date</label>
                             <input type="date" name="train_date" class="border-0 w-100 fw-bold" value="<?php echo htmlspecialchars($date); ?>" min="<?php echo date('Y-m-d'); ?>" required>
+                        </div>
+                        <div class="search-input-group px-3 py-2" style="min-width: 150px;">
+                            <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-filter text-info me-1"></i>Price Sort</label>
+                            <select name="sort_price" class="border-0 w-100 fw-bold" style="background: none;" onchange="this.form.submit()">
+                                <option value="">Default</option>
+                                <option value="low_to_high" <?php echo ($sort_price === 'low_to_high') ? 'selected' : ''; ?>>Low to High</option>
+                                <option value="high_to_low" <?php echo ($sort_price === 'high_to_low') ? 'selected' : ''; ?>>High to Low</option>
+                            </select>
                         </div>
                         <button type="submit" class="btn btn-info btn-search rounded-pill px-4 py-3 ms-2 fw-bold text-white shadow-lg">
                             Search Trains
