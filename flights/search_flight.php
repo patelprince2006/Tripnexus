@@ -30,10 +30,8 @@ $search_note = null;
 $travel_date = date('Y-m-d');
 $from = '';
 $to = '';
-$trip_type = 'oneWay';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $trip_type = $_POST['trip_type'] ?? 'oneWay';
     $from = $_POST['departure_city'];
     $to = $_POST['arrival_city'];
     $travel_date = $_POST['departure_date'];
@@ -134,20 +132,72 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $search_performed = true;
 } else {
-    // Default: Show upcoming schedule (e.g., 10 flights from now)
-    $upcoming_query = "SELECT f.*, a.airline_name, a.airline_logo 
-                       FROM flights f 
-                       JOIN airlines a ON f.airline_id = a.airline_id 
-                       WHERE f.departure_time >= NOW()
-                       ORDER BY f.departure_time ASC 
-                       LIMIT 10";
-    $up_res = db_query($conn, $upcoming_query);
-    if ($up_res) {
-        while ($row = db_fetch_assoc($up_res)) {
-            $row['rating'] = rand(35, 50) / 10;
-            $results[] = $row;
+    // Recommendation System: Show personalized or popular flights
+    $rec_flights = [];
+    $is_personalized = false;
+
+    if (isset($_SESSION['user_id'])) {
+        $uid = $_SESSION['user_id'];
+        // 1. Get cities from recent bookings
+        $history_res = db_query($conn, "SELECT DISTINCT departure_airport, arrival_airport FROM bookings b 
+                                       JOIN flights f ON b.reference_id = f.flight_id 
+                                       WHERE b.user_id = ? AND b.booking_type = 'flight' 
+                                       ORDER BY b.booking_date DESC LIMIT 5", [$uid]);
+        $pref_cities = [];
+        while ($h = db_fetch_assoc($history_res)) {
+            $pref_cities[] = $h['departure_airport'];
+            $pref_cities[] = $h['arrival_airport'];
+        }
+
+        // 2. Get cities from wishlist
+        $wish_res = db_query($conn, "SELECT DISTINCT departure_airport, arrival_airport FROM wishlist w 
+                                    JOIN flights f ON w.item_id = f.flight_id 
+                                    WHERE w.user_id = ? AND w.item_type = 'flight' LIMIT 5", [$uid]);
+        while ($w = db_fetch_assoc($wish_res)) {
+            $pref_cities[] = $w['departure_airport'];
+            $pref_cities[] = $w['arrival_airport'];
+        }
+
+        $pref_cities = array_unique(array_filter($pref_cities));
+
+        if (!empty($pref_cities)) {
+            $city_list = "'" . implode("','", array_map('mysqli_real_escape_string', array_fill(0, count($pref_cities), $conn), $pref_cities)) . "'";
+            $placeholders = implode(',', array_fill(0, count($pref_cities), '?'));
+            $rec_query = "SELECT f.*, a.airline_name, a.airline_logo 
+                         FROM flights f 
+                         JOIN airlines a ON f.airline_id = a.airline_id 
+                         WHERE f.departure_time >= NOW() 
+                         AND (f.departure_airport IN ($placeholders) OR f.arrival_airport IN ($placeholders))
+                         ORDER BY f.departure_time ASC LIMIT 10";
+            $rec_res = db_query($conn, $rec_query, array_merge($pref_cities, $pref_cities));
+            if ($rec_res && mysqli_num_rows($rec_res) > 0) {
+                while ($row = db_fetch_assoc($rec_res)) {
+                    $row['rating'] = rand(35, 50) / 10;
+                    $results[] = $row;
+                }
+                $is_personalized = true;
+            }
         }
     }
+
+    if (empty($results)) {
+        // Fallback: Show top-rated or most affordable upcoming flights
+        $popular_query = "SELECT f.*, a.airline_name, a.airline_logo 
+                         FROM flights f 
+                         JOIN airlines a ON f.airline_id = a.airline_id 
+                         WHERE f.departure_time >= NOW()
+                         ORDER BY f.base_price ASC, f.departure_time ASC 
+                         LIMIT 10";
+        $pop_res = db_query($conn, $popular_query);
+        if ($pop_res) {
+            while ($row = db_fetch_assoc($pop_res)) {
+                $row['rating'] = rand(40, 50) / 10; // Higher rating for popular/featured
+                $results[] = $row;
+            }
+        }
+    }
+    
+    $search_note = $is_personalized ? "Recommended flights based on your travel history" : "Popular flights you might like";
 }
 ?>
 
@@ -292,18 +342,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="tab-pane fade show active" role="tabpanel">
                     <form method="POST" action="">
                         <div class="modern-search-wrapper shadow-lg">
-                            <!-- Trip Type Filters -->
-                            <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="trip_type" id="tripOneWay" value="oneWay" <?php echo ($trip_type !== 'roundTrip') ? 'checked' : ''; ?>>
-                                    <label class="form-check-label" for="tripOneWay">One Way</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="trip_type" id="tripRoundTrip" value="roundTrip" <?php echo ($trip_type === 'roundTrip') ? 'checked' : ''; ?>>
-                                    <label class="form-check-label" for="tripRoundTrip">Round Trip</label>
-                                </div>
-                            </div>
-
                             <!-- Search Inputs -->
                             <div class="modern-search-bar p-2 d-flex align-items-center">
                                 <div class="search-input-group border-end flex-grow-1 px-3 py-2">
@@ -340,18 +378,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     </select>
                                 </div>
 
-                                <div class="search-input-group border-end px-3 py-2" style="min-width: 150px;">
-                                    <label class="d-block small text-uppercase fw-bold text-muted mb-1">Departure</label>
+                                <div class="search-input-group border-end px-3 py-2" style="min-width: 200px;">
+                                    <label class="d-block small text-uppercase fw-bold text-muted mb-1">Departure Date</label>
                                     <input type="date" name="departure_date" id="flightDepartureDate" class="border-0 w-100 fw-bold" style="background: none;" value="<?php echo $travel_date; ?>" min="<?php echo date('Y-m-d'); ?>" required>
                                 </div>
 
-                                <div class="search-input-group px-3 py-2" style="min-width: 150px;" id="returnDateGroup">
-                                    <label class="d-block small text-uppercase fw-bold text-muted mb-1">Return</label>
-                                    <input type="date" name="return_date" id="returnDate" class="border-0 w-100 fw-bold" style="background: none;" min="<?php echo date('Y-m-d'); ?>">
-                                </div>
-
-                                <button type="submit" class="btn btn-primary btn-search rounded-pill px-4 py-3 ms-2 fw-bold text-white shadow-lg">
-                                    Find Flights
+                                <button type="submit" class="btn btn-primary btn-search rounded-pill px-5 py-3 ms-2 fw-bold text-white shadow-lg">
+                                    Search Flights
                                 </button>
                             </div>
                         </div>
@@ -361,8 +394,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
 
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold m-0"><?php echo !empty($search_note) ? 'Available Flights' : ($search_performed ? count($results) . ' Flights Found' : 'Upcoming Flight Schedule'); ?></h4>
-            <div class="text-muted small"><?php echo $search_performed ? 'Showing best prices for your route' : 'Recommended flights for your next trip'; ?></div>
+            <h4 class="fw-bold m-0"><?php echo !empty($search_note) && $search_performed ? 'Available Flights' : ($search_performed ? count($results) . ' Flights Found' : ($is_personalized ? 'Recommended for You' : 'Popular Flights')); ?></h4>
+            <div class="text-muted small"><?php echo $search_performed ? 'Showing best prices for your route' : ($is_personalized ? 'Based on your travel history' : 'Recommended flights for your next trip'); ?></div>
         </div>
 
         <?php if (!empty($search_note)): ?>
@@ -458,28 +491,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Searching...';
             btn.classList.add('disabled');
         };
-
-        // One-way / round-trip toggle for return date
-        const tripOneWay = document.getElementById('tripOneWay');
-        const tripRoundTrip = document.getElementById('tripRoundTrip');
-        const returnGroup = document.getElementById('returnDateGroup');
-        const returnInput = document.getElementById('returnDate');
-
-        function updateReturnVisibility() {
-            if (!tripOneWay || !tripRoundTrip || !returnGroup || !returnInput) return;
-            const isRoundTrip = tripRoundTrip.checked;
-            returnGroup.style.display = isRoundTrip ? 'block' : 'none';
-            returnInput.required = isRoundTrip;
-            if (!isRoundTrip) {
-                returnInput.value = '';
-            }
-        }
-
-        if (tripOneWay && tripRoundTrip) {
-            tripOneWay.addEventListener('change', updateReturnVisibility);
-            tripRoundTrip.addEventListener('change', updateReturnVisibility);
-            updateReturnVisibility();
-        }
 
         // Swap functionality
         function swapSearchLocations() {

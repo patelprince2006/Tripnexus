@@ -41,6 +41,57 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
+    // --- Start Google Hotels (SerpApi) Integration ---
+    $serp_api_key = "c549c4393c35299ce51ce61fbf77dd1917e9614c698f6761cbfd54a5748bb2ef";
+    $query_params = [
+        "engine" => "google_hotels",
+        "q" => $city . " Hotels",
+        "check_in_date" => $check_in,
+        "check_out_date" => $check_out,
+        "adults" => $guests,
+        "currency" => "INR",
+        "api_key" => $serp_api_key
+    ];
+
+    $api_url = "https://serpapi.com/search.json?" . http_build_query($query_params);
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $api_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    $response = curl_exec($ch);
+    $err = curl_error($ch);
+    curl_close($ch);
+
+    if (!$err) {
+        $api_data = json_decode($response, true);
+        if (isset($api_data['properties']) && is_array($api_data['properties'])) {
+            foreach ($api_data['properties'] as $hotel) {
+                $hotel_name = $hotel['name'] ?? 'Google Hotel';
+                $hotel_price = $hotel['total_rate']['lowest'] ?? ($hotel['rate_per_night']['lowest'] ?? rand(2000, 8000));
+                
+                // Remove non-numeric characters from price if it's a string like "₹5,000"
+                if (is_string($hotel_price)) {
+                    $hotel_price = (int) preg_replace('/[^0-9]/', '', $hotel_price);
+                }
+
+                $rating = $hotel['overall_rating'] ?? 4.0;
+                $description = $hotel['description'] ?? 'Stay at ' . $hotel_name;
+                $thumbnail = $hotel['thumbnail'] ?? '../photos/hotel1.jpg';
+
+                // Sync with local DB to allow booking
+                $check_res = db_query($conn, "SELECT hotel_id FROM hotels WHERE name = ?", [$hotel_name]);
+                $hotel_row = db_fetch_assoc($check_res);
+                
+                if (!$hotel_row) {
+                    db_query($conn, "INSERT INTO hotels (name, city, address, description, price_per_night, rating, main_image) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+                        [$hotel_name, $city, $city, $description, $hotel_price, $rating, $thumbnail]);
+                }
+            }
+        }
+    }
+
     $search_query = "SELECT * FROM hotels 
                      WHERE city LIKE ? 
                      OR name LIKE ?
@@ -54,6 +105,56 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
     $search_performed = true;
+} else {
+    // Recommendation System: Show personalized or featured hotels
+    $is_personalized = false;
+
+    if (isset($_SESSION['user_id'])) {
+        $uid = $_SESSION['user_id'];
+        // 1. Get cities from recent bookings
+        $history_res = db_query($conn, "SELECT DISTINCT city FROM bookings b 
+                                       JOIN hotels h ON b.reference_id = h.hotel_id 
+                                       WHERE b.user_id = ? AND b.booking_type = 'hotel' 
+                                       ORDER BY b.booking_date DESC LIMIT 5", [$uid]);
+        $pref_cities = [];
+        while ($h = db_fetch_assoc($history_res)) {
+            $pref_cities[] = $h['city'];
+        }
+
+        // 2. Get cities from wishlist
+        $wish_res = db_query($conn, "SELECT DISTINCT city FROM wishlist w 
+                                    JOIN hotels h ON w.item_id = h.hotel_id 
+                                    WHERE w.user_id = ? AND w.item_type = 'hotel' LIMIT 5", [$uid]);
+        while ($w = db_fetch_assoc($wish_res)) {
+            $pref_cities[] = $w['city'];
+        }
+
+        $pref_cities = array_unique(array_filter($pref_cities));
+
+        if (!empty($pref_cities)) {
+            $placeholders = implode(',', array_fill(0, count($pref_cities), '?'));
+            $rec_query = "SELECT * FROM hotels 
+                         WHERE city IN ($placeholders)
+                         ORDER BY rating DESC LIMIT 6";
+            $rec_res = db_query($conn, $rec_query, $pref_cities);
+            if ($rec_res && mysqli_num_rows($rec_res) > 0) {
+                while ($row = db_fetch_assoc($rec_res)) {
+                    $results[] = $row;
+                }
+                $is_personalized = true;
+            }
+        }
+    }
+
+    if (empty($results)) {
+        // Fallback: Show top-rated hotels across all cities
+        $featured_res = db_query($conn, "SELECT * FROM hotels ORDER BY rating DESC LIMIT 6");
+        if ($featured_res) {
+            while ($row = db_fetch_assoc($featured_res)) {
+                $results[] = $row;
+            }
+        }
+    }
 }
 ?>
 
@@ -188,59 +289,60 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <h4 class="fw-bold m-0"><i class="bi bi-building text-warning me-2"></i><?php echo count($results); ?> Hotels Found</h4>
                 <div class="text-muted small">in <?php echo htmlspecialchars($city); ?></div>
             </div>
+        <?php else: ?>
+            <div class="d-flex justify-content-between align-items-center mb-4 mt-5">
+                <h4 class="fw-bold m-0"><i class="bi bi-star-fill text-warning me-2"></i><?php echo $is_personalized ? 'Recommended for You' : 'Featured Hotels'; ?></h4>
+                <div class="text-muted small"><?php echo $is_personalized ? 'Based on your travel history' : 'Top rated stays across India'; ?></div>
+            </div>
+        <?php endif; ?>
 
-            <?php if (empty($results)): ?>
-                <div class="text-center py-5 bg-white rounded-4 shadow-sm">
-                    <i class="bi bi-building text-muted display-1 opacity-25"></i>
-                    <p class="mt-3 text-muted">No hotels found for this location. Try a different city!</p>
-                </div>
-            <?php else: ?>
-                <div class="row g-4">
-                <?php foreach ($results as $hotel): ?>
-                    <div class="col-md-6 col-lg-4">
-                        <div class="card h-100 border-0 shadow-sm hotel-card overflow-hidden rounded-4">
-                            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center text-white" style="height: 200px; background: linear-gradient(45deg, #eee, #ddd) !important;">
-                                <i class="bi bi-image fs-1 opacity-25"></i>
+        <?php if (empty($results)): ?>
+            <div class="text-center py-5 bg-white rounded-4 shadow-sm">
+                <i class="bi bi-building text-muted display-1 opacity-25"></i>
+                <p class="mt-3 text-muted">No hotels found for this location. Try a different city!</p>
+            </div>
+        <?php else: ?>
+            <div class="row g-4">
+            <?php foreach ($results as $hotel): ?>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm hotel-card overflow-hidden rounded-4">
+                        <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center text-white" style="height: 200px; background: linear-gradient(45deg, #eee, #ddd) !important;">
+                            <i class="bi bi-image fs-1 opacity-25"></i>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="fw-bold mb-0"><?php echo htmlspecialchars($hotel['name']); ?></h5>
+                                <span class="badge bg-warning text-dark rounded-pill px-2 py-1" style="font-size: 0.75rem;"><i class="bi bi-star-fill me-1"></i><?php echo htmlspecialchars($hotel['rating']); ?></span>
                             </div>
-                            <div class="card-body p-4">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h5 class="fw-bold mb-0"><?php echo htmlspecialchars($hotel['name']); ?></h5>
-                                    <span class="badge bg-warning text-dark rounded-pill px-2 py-1" style="font-size: 0.75rem;"><i class="bi bi-star-fill me-1"></i><?php echo htmlspecialchars($hotel['rating']); ?></span>
+                            <p class="text-muted small mb-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i><?php echo htmlspecialchars($hotel['address']); ?>, <?php echo htmlspecialchars($hotel['city']); ?></p>
+                            <p class="small text-secondary mb-4"><?php echo htmlspecialchars($hotel['amenities']); ?></p>
+                            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                                <div>
+                                    <div class="text-muted" style="font-size: 0.7rem;">Price per night</div>
+                                    <h4 class="fw-bold mb-0 text-dark">₹<?php echo number_format($hotel['price_per_night'], 0); ?></h4>
                                 </div>
-                                <p class="text-muted small mb-3"><i class="bi bi-geo-alt-fill text-danger me-1"></i><?php echo htmlspecialchars($hotel['address']); ?></p>
-                                <p class="small text-secondary mb-4"><?php echo htmlspecialchars($hotel['amenities']); ?></p>
-                                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                                    <div>
-                                        <div class="text-muted" style="font-size: 0.7rem;">Price per night</div>
-                                        <h4 class="fw-bold mb-0 text-dark">₹<?php echo number_format($hotel['price_per_night'], 0); ?></h4>
-                                    </div>
-                                    <div class="d-flex gap-2">
-                                        <?php $is_fav = in_array((int)$hotel['hotel_id'], $user_wishlist); ?>
-                                        <button class="btn <?php echo $is_fav ? 'btn-danger' : 'btn-outline-secondary'; ?> btn-sm px-3 rounded-pill" onclick="toggleWishlist(this, 'hotel', <?php echo $hotel['hotel_id']; ?>, '<?php echo htmlspecialchars($hotel['name'], ENT_QUOTES); ?>')">
-                                            <i class="bi <?php echo $is_fav ? 'bi-heart-fill' : 'bi-heart'; ?>"></i>
-                                        </button>
-                                        <form action="../flights/booking.php" method="POST">
-                                            <input type="hidden" name="service_type" value="hotel">
-                                            <input type="hidden" name="reference_id" value="<?php echo $hotel['hotel_id']; ?>">
-                                            <input type="hidden" name="amount" value="<?php echo $hotel['price_per_night']; ?>">
-                                            <input type="hidden" name="travel_date" value="<?php echo htmlspecialchars($check_in); ?>">
-                                            <input type="hidden" name="item_name" value="<?php echo htmlspecialchars($hotel['name']); ?>">
-                                            <button type="submit" class="btn btn-dark fw-bold px-4 rounded-pill">Book</button>
-                                        </form>
-                                    </div>
+                                <div class="d-flex gap-2">
+                                    <?php $is_fav = in_array((int)$hotel['hotel_id'], $user_wishlist); ?>
+                                    <button class="btn <?php echo $is_fav ? 'btn-danger' : 'btn-outline-secondary'; ?> btn-sm px-3 rounded-pill" onclick="toggleWishlist(this, 'hotel', <?php echo $hotel['hotel_id']; ?>, '<?php echo htmlspecialchars($hotel['name'], ENT_QUOTES); ?>')">
+                                        <i class="bi <?php echo $is_fav ? 'bi-heart-fill' : 'bi-heart'; ?>"></i>
+                                    </button>
+                                    <form action="../flights/booking.php" method="POST">
+                                        <input type="hidden" name="service_type" value="hotel">
+                                        <input type="hidden" name="reference_id" value="<?php echo $hotel['hotel_id']; ?>">
+                                        <input type="hidden" name="amount" value="<?php echo $hotel['price_per_night']; ?>">
+                                        <input type="hidden" name="travel_date" value="<?php echo htmlspecialchars($check_in); ?>">
+                                        <input type="hidden" name="item_name" value="<?php echo htmlspecialchars($hotel['name']); ?>">
+                                        <button type="submit" class="btn btn-dark fw-bold px-4 rounded-pill">Book</button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
                     </div>
-                <?php endforeach; ?>
                 </div>
-            <?php endif; ?>
-        <?php else: ?>
-            <div class="text-center py-5 mt-5">
-                <i class="bi bi-building text-muted display-1 opacity-25"></i>
-                <p class="mt-3 text-muted">Select your city and dates above to search for hotels.</p>
+            <?php endforeach; ?>
             </div>
         <?php endif; ?>
+    </div>
     </div>
 
     <footer class="bg-dark text-white text-center py-4 mt-5">

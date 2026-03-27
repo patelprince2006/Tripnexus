@@ -1,7 +1,7 @@
 <?php
 session_start();
-include '../database/db.php';
-require_once '../email/EmailService.php';
+require_once __DIR__ . '/../database/db.php';
+require_once __DIR__ . '/../email/EmailService.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $verificationCode = trim($_POST['verification_code']);
@@ -13,7 +13,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Check if database is connected
-    if (empty($DB_CONNECTED)) {
+    if (!defined('DB_CONNECTED') || !DB_CONNECTED) {
         echo "<script>alert('Database connection failed. Please try again later.'); history.back();</script>";
         exit();
     }
@@ -63,7 +63,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     exit();
 }
 
-if (DB_CONNECTED) {
+if (defined('DB_CONNECTED') && DB_CONNECTED) {
     db_close($conn);
 }
 ?>

@@ -1,5 +1,5 @@
 <?php
-include '../database/db.php';
+require_once __DIR__ . '/../database/db.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Sanitize input
@@ -19,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Save to database
-    if ($DB_CONNECTED) {
+    if (defined('DB_CONNECTED') && DB_CONNECTED) {
         // Ensure table exists
         $sql_table = "CREATE TABLE IF NOT EXISTS contact_messages (
             id INT AUTO_INCREMENT PRIMARY KEY,

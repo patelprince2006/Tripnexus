@@ -18,7 +18,7 @@ define('RESET_TOKEN_EXPIRY', 60);        // Minutes
 define('VERIFICATION_CODE_LENGTH', 6);   // Digits
 
 // Application Settings
-define('APP_URL', 'http://localhost/SGP');
+define('APP_URL', 'http://localhost/SGP-vijay_new');
 define('APP_NAME', 'TripNexus');
 
 // Enable/Disable Email Sending (for testing)

@@ -189,17 +189,6 @@ if ($popular_tours_res) {
                     <div class="tab-pane fade show active" id="pills-flights" role="tabpanel">
                         <form method="POST" action="flights/search_flight.php">
                             <div class="modern-search-wrapper shadow-lg">
-                                <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="trip_type" id="oneWay" value="oneWay" onclick="toggleFlightReturn(false)" checked>
-                                        <label class="form-check-label" for="oneWay">One Way</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="trip_type" id="roundTrip" value="roundTrip" onclick="toggleFlightReturn(true)">
-                                        <label class="form-check-label" for="roundTrip">Round Trip</label>
-                                    </div>
-                                </div>
-
                                 <div class="modern-search-bar p-2 d-flex align-items-center">
                                     <div class="search-input-group border-end flex-grow-1 px-3 py-2">
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1">
@@ -235,18 +224,13 @@ if ($popular_tours_res) {
                                         </select>
                                     </div>
 
-                                    <div class="search-input-group border-end px-3 py-2" style="min-width: 150px;">
-                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1">Departure</label>
+                                    <div class="search-input-group border-end px-3 py-2" style="min-width: 200px;">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1">Departure Date</label>
                                         <input type="date" name="departure_date" id="flightDepartureDate" class="border-0 w-100 fw-bold" style="background: none;" required>
                                     </div>
 
-                                    <div class="search-input-group px-3 py-2" style="min-width: 150px;" id="flightReturnDateGroup" style="display: none;">
-                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1">Return</label>
-                                        <input type="date" name="return_date" id="flightReturnDate" class="border-0 w-100 fw-bold" style="background: none;">
-                                    </div>
-
-                                    <button type="submit" class="btn btn-primary btn-search rounded-pill px-4 py-3 ms-2 fw-bold text-white shadow-lg">
-                                        Search
+                                    <button type="submit" class="btn btn-primary btn-search rounded-pill px-5 py-3 ms-2 fw-bold text-white shadow-lg">
+                                        Search Flights
                                     </button>
                                 </div>
                             </div>
@@ -257,17 +241,6 @@ if ($popular_tours_res) {
                     <div class="tab-pane fade" id="pills-bus" role="tabpanel">
                         <form method="POST" action="buses/search_bus.php">
                             <div class="modern-search-wrapper shadow-lg">
-                                <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="trip_type" id="busOneWay" value="oneWay" onclick="toggleBusReturn(false)" checked>
-                                        <label class="form-check-label" for="busOneWay">One Way</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="trip_type" id="busRoundTrip" value="roundTrip" onclick="toggleBusReturn(true)">
-                                        <label class="form-check-label" for="busRoundTrip">Round Trip</label>
-                                    </div>
-                                </div>
-
                                 <div class="modern-search-bar p-2 d-flex align-items-center">
                                     <div class="search-input-group border-end flex-grow-1 px-3 py-2">
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1">
@@ -299,18 +272,12 @@ if ($popular_tours_res) {
                                         </select>
                                     </div>
 
-                                    <div class="search-input-group border-end px-3 py-2" style="min-width: 150px;">
-                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1">Departure</label>
+                                    <div class="search-input-group border-end px-3 py-2" style="min-width: 200px;">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1">Departure Date</label>
                                         <input type="date" name="bus_date" id="busDepartureDate" class="border-0 w-100 fw-bold" style="background: none;" required>
                                     </div>
 
-
-                                    <div class="search-input-group px-3 py-2" style="min-width: 150px;" id="busReturnDateGroup" style="display: none;">
-                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1">Return</label>
-                                        <input type="date" name="return_date" id="busReturnDate" class="border-0 w-100 fw-bold" style="background: none;">
-                                    </div>
-
-                                    <button type="submit" class="btn btn-danger btn-search rounded-pill px-4 py-3 ms-2 fw-bold text-white shadow-lg">
+                                    <button type="submit" class="btn btn-danger btn-search rounded-pill px-5 py-3 ms-2 fw-bold text-white shadow-lg">
                                         Search Bus
                                     </button>
                                 </div>
@@ -351,6 +318,7 @@ if ($popular_tours_res) {
                                             <option value="CNB">Kanpur Central (CNB)</option>
                                             <option value="MYS">Mysuru (MYS)</option>
                                             <option value="CBE">Coimbatore (CBE)</option>
+                                            <option value="ND">Nadiad (ND)</option>
                                         </select>
                                     </div>
 
@@ -384,6 +352,7 @@ if ($popular_tours_res) {
                                             <option value="CNB">Kanpur Central (CNB)</option>
                                             <option value="MYS">Mysuru (MYS)</option>
                                             <option value="CBE">Coimbatore (CBE)</option>
+                                            <option value="ND">Nadiad (ND)</option>
                                         </select>
                                     </div>
                                     <div class="search-input-group px-3 py-2" style="min-width: 200px;">
@@ -652,13 +621,6 @@ if ($popular_tours_res) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="public/script.js"></script>
     <script>
-        function toggleFlightReturn(show) {
-            document.getElementById('flightReturnDateGroup').style.display = show ? 'block' : 'none';
-        }
-        function toggleBusReturn(show) {
-            document.getElementById('busReturnDateGroup').style.display = show ? 'block' : 'none';
-        }
-
         function swapTrainLocations() {
             const from = document.getElementById('trainFrom');
             const to = document.getElementById('trainTo');

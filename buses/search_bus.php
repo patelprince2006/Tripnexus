@@ -49,15 +49,60 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     $search_performed = true;
 } else {
-    // Default: Show upcoming schedule
-    $upcoming_query = "SELECT * FROM buses 
-                       WHERE departure_time >= NOW()
-                       ORDER BY departure_time ASC 
-                       LIMIT 10";
-    $up_res = db_query($conn, $upcoming_query);
-    if ($up_res) {
-        while ($row = db_fetch_assoc($up_res)) {
-            $results[] = $row;
+    // Recommendation System: Show personalized or popular buses
+    $is_personalized = false;
+
+    if (isset($_SESSION['user_id'])) {
+        $uid = $_SESSION['user_id'];
+        // 1. Get locations from recent bookings
+        $history_res = db_query($conn, "SELECT DISTINCT from_location, to_location FROM bookings b 
+                                       JOIN buses bu ON b.reference_id = bu.bus_id 
+                                       WHERE b.user_id = ? AND b.booking_type = 'bus' 
+                                       ORDER BY b.booking_date DESC LIMIT 5", [$uid]);
+        $pref_locs = [];
+        while ($h = db_fetch_assoc($history_res)) {
+            $pref_locs[] = $h['from_location'];
+            $pref_locs[] = $h['to_location'];
+        }
+
+        // 2. Get locations from wishlist
+        $wish_res = db_query($conn, "SELECT DISTINCT from_location, to_location FROM wishlist w 
+                                    JOIN buses bu ON w.item_id = bu.bus_id 
+                                    WHERE w.user_id = ? AND w.item_type = 'bus' LIMIT 5", [$uid]);
+        while ($w = db_fetch_assoc($wish_res)) {
+            $pref_locs[] = $w['from_location'];
+            $pref_locs[] = $w['to_location'];
+        }
+
+        $pref_locs = array_unique(array_filter($pref_locs));
+
+        if (!empty($pref_locs)) {
+            $placeholders = implode(',', array_fill(0, count($pref_locs), '?'));
+            $rec_query = "SELECT * FROM buses 
+                         WHERE departure_time >= NOW() 
+                         AND (from_location IN ($placeholders) OR to_location IN ($placeholders))
+                         ORDER BY departure_time ASC LIMIT 10";
+            $rec_res = db_query($conn, $rec_query, array_merge($pref_locs, $pref_locs));
+            if ($rec_res && mysqli_num_rows($rec_res) > 0) {
+                while ($row = db_fetch_assoc($rec_res)) {
+                    $results[] = $row;
+                }
+                $is_personalized = true;
+            }
+        }
+    }
+
+    if (empty($results)) {
+        // Fallback: Show most booked or upcoming buses
+        $popular_query = "SELECT * FROM buses 
+                         WHERE departure_time >= NOW()
+                         ORDER BY price ASC, departure_time ASC 
+                         LIMIT 10";
+        $pop_res = db_query($conn, $popular_query);
+        if ($pop_res) {
+            while ($row = db_fetch_assoc($pop_res)) {
+                $results[] = $row;
+            }
         }
     }
 }
@@ -117,17 +162,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <div class="modern-search-wrapper shadow-lg">
                 <form method="POST" action="">
-                    <div class="filter-row px-4 pt-3 d-flex gap-3 small text-muted">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="trip_type" id="busOneWay" value="oneWay" <?php echo ($trip_type === 'oneWay') ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="busOneWay">One Way</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="trip_type" id="busRoundTrip" value="roundTrip" <?php echo ($trip_type === 'roundTrip') ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="busRoundTrip">Round Trip</label>
-                        </div>
-                    </div>
-
                     <div class="modern-search-bar p-2 d-flex align-items-center">
                         <div class="search-input-group border-end flex-grow-1 px-3 py-2">
                             <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-bus-front-fill text-danger me-1"></i>From</label>
@@ -155,17 +189,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </select>
                         </div>
 
-                        <div class="search-input-group border-end px-3 py-2" style="min-width: 150px;">
-                            <label class="d-block small text-uppercase fw-bold text-muted mb-1">Departure</label>
+                        <div class="search-input-group border-end px-3 py-2" style="min-width: 200px;">
+                            <label class="d-block small text-uppercase fw-bold text-muted mb-1">Departure Date</label>
                             <input type="date" name="bus_date" id="busDepartureDate" class="border-0 w-100 fw-bold" style="background: none;" value="<?php echo $date; ?>" min="<?php echo date('Y-m-d'); ?>" required>
                         </div>
 
-                        <div class="search-input-group px-3 py-2" style="min-width: 150px;" id="busReturnDateGroup">
-                            <label class="d-block small text-uppercase fw-bold text-muted mb-1">Return</label>
-                            <input type="date" name="return_date" id="busReturnDate" class="border-0 w-100 fw-bold" style="background: none;" min="<?php echo date('Y-m-d'); ?>">
-                        </div>
-
-                        <button type="submit" class="btn btn-danger btn-search rounded-pill px-4 py-3 ms-2 fw-bold text-white shadow-lg">
+                        <button type="submit" class="btn btn-danger btn-search rounded-pill px-5 py-3 ms-2 fw-bold text-white shadow-lg">
                             Search Bus
                         </button>
                     </div>
@@ -174,7 +203,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
 
         <div class="d-flex justify-content-between align-items-center my-4">
-            <h4 class="fw-bold m-0"><i class="bi bi-bus-front text-danger me-2"></i><?php echo $search_performed ? count($results) . ' Buses Found' : 'Upcoming Bus Schedule'; ?></h4>
+            <h4 class="fw-bold m-0"><i class="bi bi-bus-front text-danger me-2"></i><?php echo $search_performed ? count($results) . ' Buses Found' : ($is_personalized ? 'Recommended for You' : 'Popular Bus Routes'); ?></h4>
+            <div class="text-muted small"><?php echo $search_performed ? 'Best prices for your route' : ($is_personalized ? 'Based on your travel history' : 'Top rated bus operators'); ?></div>
         </div>
 
         <?php if (empty($results) && $search_performed): ?>
@@ -232,21 +262,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             const temp = from.value;
             from.value = to.value;
             to.value = temp;
-        }
-
-        const busOneWay = document.getElementById('busOneWay');
-        const busRoundTrip = document.getElementById('busRoundTrip');
-        const busReturnGroup = document.getElementById('busReturnDateGroup');
-
-        function updateBusReturnVisibility() {
-            if (!busOneWay || !busRoundTrip || !busReturnGroup) return;
-            busReturnGroup.style.display = busRoundTrip.checked ? 'block' : 'none';
-        }
-
-        if (busOneWay && busRoundTrip) {
-            busOneWay.addEventListener('change', updateBusReturnVisibility);
-            busRoundTrip.addEventListener('change', updateBusReturnVisibility);
-            updateBusReturnVisibility();
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

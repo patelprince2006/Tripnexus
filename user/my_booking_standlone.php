@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../database/db.php';
+require_once __DIR__ . '/../database/db.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -20,7 +20,7 @@ $stats = [
 $bookings = [];
 $db_error = null;
 
-if (!empty($DB_CONNECTED)) {
+if (defined('DB_CONNECTED') && DB_CONNECTED) {
     // Defensive check: Try to see if required columns exist
     $check_cols = db_query($conn, "SHOW COLUMNS FROM bookings");
     $existing_cols = [];

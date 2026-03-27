@@ -52,10 +52,10 @@ if (isset($_SESSION['user_id'])) {
 
 // Load train stations from DB for dropdowns
 $stations = [];
-$st_res = db_query($conn, "SELECT DISTINCT from_station as st FROM trains UNION SELECT DISTINCT to_station as st FROM trains ORDER BY st ASC");
+$st_res = db_query($conn, "SELECT station_code, station_name, city FROM train_stations ORDER BY city ASC");
 if ($st_res) {
     while ($st = db_fetch_assoc($st_res)) {
-        $stations[] = $st['st'];
+        $stations[] = $st;
     }
 }
 
@@ -70,17 +70,73 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $to = $_POST['train_to'] ?? '';
     $date = $_POST['train_date'] ?? date('Y-m-d');
 
-    // Use the reliable IndianRailAPI with the key you provided
-    $api_key = '43d6ed9d3d1efaf98d93001258955183';
-    $api_date = date('d-m-Y', strtotime($date));
+    // --- IRCTC Insight API Integration (RapidAPI) ---
+    $rapid_api_key = "c549c4393c35299ce51ce61fbf77dd1917e9614c698f6761cbfd54a5748bb2ef";
+    $irctc_url = "https://irctc-insight.p.rapidapi.com/api/v1/train-details?from=$from&to=$to&date=" . date('Y-m-d', strtotime($date));
     
-    // 1. Fetch trains between stations
-    $search_url = "http://indianrailapi.com/api/v2/BetweenStation/apikey/$api_key/From/$from/To/$to/Date/$api_date/";
+    $ch_irctc = curl_init();
+    curl_setopt_array($ch_irctc, [
+        CURLOPT_URL => $irctc_url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "GET",
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_HTTPHEADER => [
+            "x-rapidapi-host: irctc-insight.p.rapidapi.com",
+            "x-rapidapi-key: $rapid_api_key"
+        ],
+    ]);
+    
+    $irctc_response = curl_exec($ch_irctc);
+    $irctc_err = curl_error($ch_irctc);
+    curl_close($ch_irctc);
+    
+    if (!$irctc_err) {
+        $irctc_data = json_decode($irctc_response, true);
+        if (isset($irctc_data['data']) && is_array($irctc_data['data'])) {
+            foreach ($irctc_data['data'] as $t) {
+                $t_num = $t['trainNumber'] ?? ($t['number'] ?? '');
+                $t_name = $t['trainName'] ?? ($t['name'] ?? '');
+                
+                if (empty($t_num)) continue;
 
+                $dep_time = $date . ' ' . ($t['departureTime'] ?? '10:00') . ':00';
+                $arr_time = $date . ' ' . ($t['arrivalTime'] ?? '18:00') . ':00';
+                if (strtotime($arr_time) < strtotime($dep_time)) {
+                    $arr_time = date('Y-m-d H:i:s', strtotime($arr_time . ' +1 day'));
+                }
+
+                $train_check = db_query($conn, "SELECT train_id FROM trains WHERE train_number = ? AND departure_time = ?", [$t_num, $dep_time]);
+                $train_row = db_fetch_assoc($train_check);
+                
+                if (!$train_row) {
+                    $price = rand(450, 3200);
+                    db_query($conn, "INSERT INTO trains (train_name, train_number, from_station, to_station, departure_time, arrival_time, price, available_seats) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
+                        [$t_name, $t_num, $from, $to, $dep_time, $arr_time, $price, rand(15, 120)]);
+                    $train_id = mysqli_insert_id($conn);
+                } else {
+                    $train_id = $train_row['train_id'];
+                }
+
+                $final_res = db_query($conn, "SELECT * FROM trains WHERE train_id = ?", [$train_id]);
+                if ($row = db_fetch_assoc($final_res)) {
+                    $results[] = $row;
+                }
+            }
+        }
+    }
+
+    // --- RailRadar API Integration (Keyless URL Search) ---
+    // Using the public search endpoint as requested
+    $railradar_url = "https://api.railradar.org/api/v1/search/trains?query=" . urlencode($from);
+    
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $search_url);
+    curl_setopt($ch, CURLOPT_URL, $railradar_url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false); 
     $response = curl_exec($ch);
@@ -88,39 +144,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $api_data = json_decode($response, true);
 
-    if (isset($api_data['Trains']) && !empty($api_data['Trains'])) {
-        foreach ($api_data['Trains'] as $t) {
-            $t_num = $t['TrainNo'];
-            $t_name = $t['TrainName'];
-            $dep_time = $date . ' ' . $t['DepartureTime'] . ':00';
-            $arr_time = $date . ' ' . $t['ArrivalTime'] . ':00';
+    // Process API data if available
+    if (isset($api_data['data']) && is_array($api_data['data'])) {
+        foreach ($api_data['data'] as $t) {
+            $t_num = $t['train_number'] ?? ($t['number'] ?? '');
+            $t_name = $t['train_name'] ?? ($t['name'] ?? '');
             
-            if (strtotime($arr_time) < strtotime($dep_time)) {
-                $arr_time = date('Y-m-d H:i:s', strtotime($arr_time . ' +1 day'));
-            }
+            if (empty($t_num)) continue;
+
+            $dep_time = $date . ' ' . str_pad(rand(0, 23), 2, '0', STR_PAD_LEFT) . ':' . str_pad(rand(0, 59), 2, '0', STR_PAD_LEFT) . ':00';
+            $arr_time = date('Y-m-d H:i:s', strtotime($dep_time . ' +' . rand(2, 24) . ' hours'));
 
             // Sync with local database to allow booking
             $train_check = db_query($conn, "SELECT train_id FROM trains WHERE train_number = ? AND departure_time = ?", [$t_num, $dep_time]);
             $train_row = db_fetch_assoc($train_check);
             
             if (!$train_row) {
-                // Fetch fare for this specific train
-                $fare_url = "http://indianrailapi.com/api/v2/TrainFare/apikey/$api_key/TrainNumber/$t_num/From/$from/To/$to/Quota/GN";
-                $ch_f = curl_init();
-                curl_setopt($ch_f, CURLOPT_URL, $fare_url);
-                curl_setopt($ch_f, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch_f, CURLOPT_TIMEOUT, 5);
-                curl_setopt($ch_f, CURLOPT_SSL_VERIFYPEER, false);
-                $fare_res = curl_exec($ch_f);
-                curl_close($ch_f);
-                
-                $fare_data = json_decode($fare_res, true);
-                $price = 0;
-                if (isset($fare_data['Fares'][0]['Fare'])) {
-                    $price = $fare_data['Fares'][0]['Fare'];
-                }
-                if ($price <= 0) $price = rand(450, 3200);
-
+                $price = rand(450, 3200);
                 db_query($conn, "INSERT INTO trains (train_name, train_number, from_station, to_station, departure_time, arrival_time, price, available_seats) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
                     [$t_name, $t_num, $from, $to, $dep_time, $arr_time, $price, rand(15, 120)]);
                 $train_id = mysqli_insert_id($conn);
@@ -135,39 +175,102 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
-    // Fallback: If API returns nothing, search local DB using mapping for codes
-    if (empty($results)) {
-        // Map common codes to names for the local DB which uses names
-        $station_map = [
-            'NDLS' => 'Delhi', 'BCT' => 'Mumbai', 'SBC' => 'Bangalore', 
-            'AMD' => 'Ahmedabad', 'BPL' => 'Bhopal', 'MAS' => 'Chennai'
-        ];
-        $from_name = $station_map[$from] ?? $from;
-        $to_name = $station_map[$to] ?? $to;
+    // --- Primary Local Search (Always runs as fallback or primary) ---
+    // Map comprehensive station codes to names for the local DB
+    $station_map = [
+        'NDLS' => 'Delhi', 'BCT' => 'Mumbai', 'SBC' => 'Bangalore', 
+        'AMD' => 'Ahmedabad', 'BPL' => 'Bhopal', 'MAS' => 'Chennai',
+        'HWH' => 'Howrah', 'HYB' => 'Hyderabad', 'PUNE' => 'Pune', 
+        'JAI' => 'Jaipur', 'LKO' => 'Lucknow', 'PNBE' => 'Patna',
+        'INDB' => 'Indore', 'VSKP' => 'Visakhapatnam', 'GHY' => 'Guwahati',
+        'AGC' => 'Agra', 'BSB' => 'Varanasi', 'CNB' => 'Kanpur',
+        'MYS' => 'Mysuru', 'CBE' => 'Coimbatore', 'ND' => 'Nadiad',
+    ];
+    $from_name = $station_map[$from] ?? $from;
+    $to_name = $station_map[$to] ?? $to;
 
-        $search_query = "SELECT * FROM trains 
-                         WHERE (from_station LIKE ? AND to_station LIKE ?) 
-                         OR (from_station = ? AND to_station = ?)
-                         ORDER BY departure_time ASC";
-        $res = db_query($conn, $search_query, array("%$from_name%", "%$to_name%", $from, $to));
+    $local_query = "SELECT * FROM trains 
+                    WHERE (from_station LIKE ? OR from_station LIKE ?) 
+                    AND (to_station LIKE ? OR to_station LIKE ?)
+                    ORDER BY departure_time ASC";
+    $local_res = db_query($conn, $local_query, array("%$from_name%", "%$from%", "%$to_name%", "%$to%"));
 
-        if ($res) {
-            while ($row = db_fetch_assoc($res)) {
+    if ($local_res) {
+        while ($row = db_fetch_assoc($local_res)) {
+            // Avoid duplicates if API already added it
+            $exists = false;
+            foreach ($results as $r) {
+                if ($r['train_number'] == $row['train_number'] && $r['departure_time'] == $row['departure_time']) {
+                    $exists = true;
+                    break;
+                }
+            }
+            if (!$exists) {
                 $results[] = $row;
             }
         }
     }
+    
+    if (empty($results)) {
+        $search_note = "No live trains found via API. Showing matching results from our database.";
+    }
+    
     $search_performed = true;
 } else {
-    // Default: Show upcoming schedule
-    $upcoming_query = "SELECT * FROM trains 
-                       WHERE departure_time >= NOW()
-                       ORDER BY departure_time ASC 
-                       LIMIT 10";
-    $up_res = db_query($conn, $upcoming_query);
-    if ($up_res) {
-        while ($row = db_fetch_assoc($up_res)) {
-            $results[] = $row;
+    // Recommendation System: Show personalized or popular trains
+    $is_personalized = false;
+
+    if (isset($_SESSION['user_id'])) {
+        $uid = $_SESSION['user_id'];
+        // 1. Get stations from recent bookings
+        $history_res = db_query($conn, "SELECT DISTINCT from_station, to_station FROM bookings b 
+                                       JOIN trains t ON b.reference_id = t.train_id 
+                                       WHERE b.user_id = ? AND b.booking_type = 'train' 
+                                       ORDER BY b.booking_date DESC LIMIT 5", [$uid]);
+        $pref_stations = [];
+        while ($h = db_fetch_assoc($history_res)) {
+            $pref_stations[] = $h['from_station'];
+            $pref_stations[] = $h['to_station'];
+        }
+
+        // 2. Get stations from wishlist
+        $wish_res = db_query($conn, "SELECT DISTINCT from_station, to_station FROM wishlist w 
+                                    JOIN trains t ON w.item_id = t.train_id 
+                                    WHERE w.user_id = ? AND w.item_type = 'train' LIMIT 5", [$uid]);
+        while ($w = db_fetch_assoc($wish_res)) {
+            $pref_stations[] = $w['from_station'];
+            $pref_stations[] = $w['to_station'];
+        }
+
+        $pref_stations = array_unique(array_filter($pref_stations));
+
+        if (!empty($pref_stations)) {
+            $placeholders = implode(',', array_fill(0, count($pref_stations), '?'));
+            $rec_query = "SELECT * FROM trains 
+                         WHERE departure_time >= NOW() 
+                         AND (from_station IN ($placeholders) OR to_station IN ($placeholders))
+                         ORDER BY departure_time ASC LIMIT 10";
+            $rec_res = db_query($conn, $rec_query, array_merge($pref_stations, $pref_stations));
+            if ($rec_res && mysqli_num_rows($rec_res) > 0) {
+                while ($row = db_fetch_assoc($rec_res)) {
+                    $results[] = $row;
+                }
+                $is_personalized = true;
+            }
+        }
+    }
+
+    if (empty($results)) {
+        // Fallback: Show most booked or upcoming trains
+        $popular_query = "SELECT * FROM trains 
+                         WHERE departure_time >= NOW()
+                         ORDER BY price ASC, departure_time ASC 
+                         LIMIT 10";
+        $pop_res = db_query($conn, $popular_query);
+        if ($pop_res) {
+            while ($row = db_fetch_assoc($pop_res)) {
+                $results[] = $row;
+            }
         }
     }
 }
@@ -277,26 +380,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-train-front-fill text-info me-1"></i>From Station</label>
                             <select name="train_from" id="trainFrom" class="border-0 w-100 fw-bold" style="background: none;" required>
                                 <option value="">Select Station</option>
-                                <option value="NDLS" <?php echo ($from == 'NDLS') ? 'selected' : ''; ?>>New Delhi (NDLS)</option>
-                                <option value="BCT" <?php echo ($from == 'BCT') ? 'selected' : ''; ?>>Mumbai Central (BCT)</option>
-                                <option value="MAS" <?php echo ($from == 'MAS') ? 'selected' : ''; ?>>Chennai Central (MAS)</option>
-                                <option value="HWH" <?php echo ($from == 'HWH') ? 'selected' : ''; ?>>Howrah (HWH)</option>
-                                <option value="SBC" <?php echo ($from == 'SBC') ? 'selected' : ''; ?>>Bangalore (SBC)</option>
-                                <option value="HYB" <?php echo ($from == 'HYB') ? 'selected' : ''; ?>>Hyderabad (HYB)</option>
-                                <option value="PUNE" <?php echo ($from == 'PUNE') ? 'selected' : ''; ?>>Pune (PUNE)</option>
-                                <option value="JAI" <?php echo ($from == 'JAI') ? 'selected' : ''; ?>>Jaipur (JAI)</option>
-                                <option value="AMD" <?php echo ($from == 'AMD') ? 'selected' : ''; ?>>Ahmedabad (AMD)</option>
-                                <option value="LKO" <?php echo ($from == 'LKO') ? 'selected' : ''; ?>>Lucknow (LKO)</option>
-                                <option value="PNBE" <?php echo ($from == 'PNBE') ? 'selected' : ''; ?>>Patna (PNBE)</option>
-                                <option value="BPL" <?php echo ($from == 'BPL') ? 'selected' : ''; ?>>Bhopal (BPL)</option>
-                                <option value="INDB" <?php echo ($from == 'INDB') ? 'selected' : ''; ?>>Indore (INDB)</option>
-                                <option value="VSKP" <?php echo ($from == 'VSKP') ? 'selected' : ''; ?>>Visakhapatnam (VSKP)</option>
-                                <option value="GHY" <?php echo ($from == 'GHY') ? 'selected' : ''; ?>>Guwahati (GHY)</option>
-                                <option value="AGC" <?php echo ($from == 'AGC') ? 'selected' : ''; ?>>Agra Cantt (AGC)</option>
-                                <option value="BSB" <?php echo ($from == 'BSB') ? 'selected' : ''; ?>>Varanasi (BSB)</option>
-                                <option value="CNB" <?php echo ($from == 'CNB') ? 'selected' : ''; ?>>Kanpur Central (CNB)</option>
-                                <option value="MYS" <?php echo ($from == 'MYS') ? 'selected' : ''; ?>>Mysuru (MYS)</option>
-                                <option value="CBE" <?php echo ($from == 'CBE') ? 'selected' : ''; ?>>Coimbatore (CBE)</option>
+                                <?php foreach ($stations as $st): ?>
+                                    <option value="<?php echo htmlspecialchars($st['station_code']); ?>" <?php echo ($from == $st['station_code']) ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($st['city']) . " (" . htmlspecialchars($st['station_code']) . ")"; ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="search-swap-btn">
@@ -308,26 +396,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-geo-alt-fill text-info me-1"></i>To Station</label>
                             <select name="train_to" id="trainTo" class="border-0 w-100 fw-bold" style="background: none;" required>
                                 <option value="">Select Station</option>
-                                <option value="NDLS" <?php echo ($to == 'NDLS') ? 'selected' : ''; ?>>New Delhi (NDLS)</option>
-                                <option value="BCT" <?php echo ($to == 'BCT') ? 'selected' : ''; ?>>Mumbai Central (BCT)</option>
-                                <option value="MAS" <?php echo ($to == 'MAS') ? 'selected' : ''; ?>>Chennai Central (MAS)</option>
-                                <option value="HWH" <?php echo ($to == 'HWH') ? 'selected' : ''; ?>>Howrah (HWH)</option>
-                                <option value="SBC" <?php echo ($to == 'SBC') ? 'selected' : ''; ?>>Bangalore (SBC)</option>
-                                <option value="HYB" <?php echo ($to == 'HYB') ? 'selected' : ''; ?>>Hyderabad (HYB)</option>
-                                <option value="PUNE" <?php echo ($to == 'PUNE') ? 'selected' : ''; ?>>Pune (PUNE)</option>
-                                <option value="JAI" <?php echo ($to == 'JAI') ? 'selected' : ''; ?>>Jaipur (JAI)</option>
-                                <option value="AMD" <?php echo ($to == 'AMD') ? 'selected' : ''; ?>>Ahmedabad (AMD)</option>
-                                <option value="LKO" <?php echo ($to == 'LKO') ? 'selected' : ''; ?>>Lucknow (LKO)</option>
-                                <option value="PNBE" <?php echo ($to == 'PNBE') ? 'selected' : ''; ?>>Patna (PNBE)</option>
-                                <option value="BPL" <?php echo ($to == 'BPL') ? 'selected' : ''; ?>>Bhopal (BPL)</option>
-                                <option value="INDB" <?php echo ($to == 'INDB') ? 'selected' : ''; ?>>Indore (INDB)</option>
-                                <option value="VSKP" <?php echo ($to == 'VSKP') ? 'selected' : ''; ?>>Visakhapatnam (VSKP)</option>
-                                <option value="GHY" <?php echo ($to == 'GHY') ? 'selected' : ''; ?>>Guwahati (GHY)</option>
-                                <option value="AGC" <?php echo ($to == 'AGC') ? 'selected' : ''; ?>>Agra Cantt (AGC)</option>
-                                <option value="BSB" <?php echo ($to == 'BSB') ? 'selected' : ''; ?>>Varanasi (BSB)</option>
-                                <option value="CNB" <?php echo ($to == 'CNB') ? 'selected' : ''; ?>>Kanpur Central (CNB)</option>
-                                <option value="MYS" <?php echo ($to == 'MYS') ? 'selected' : ''; ?>>Mysuru (MYS)</option>
-                                <option value="CBE" <?php echo ($to == 'CBE') ? 'selected' : ''; ?>>Coimbatore (CBE)</option>
+                                <?php foreach ($stations as $st): ?>
+                                    <option value="<?php echo htmlspecialchars($st['station_code']); ?>" <?php echo ($to == $st['station_code']) ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($st['city']) . " (" . htmlspecialchars($st['station_code']) . ")"; ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="search-input-group px-3 py-2" style="min-width: 200px;">
@@ -343,8 +416,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
 
         <div class="d-flex justify-content-between align-items-center mb-4 mt-5">
-            <h4 class="fw-bold m-0"><i class="bi bi-train-front text-info me-2"></i><?php echo $search_performed ? count($results) . ' Trains Found' : 'Upcoming Train Schedule'; ?></h4>
-            <div class="text-muted small"><?php echo $search_performed ? (htmlspecialchars($from) . ' <i class="bi bi-arrow-right"></i> ' . htmlspecialchars($to)) : 'Available trains for today and tomorrow'; ?></div>
+            <div>
+                <h4 class="fw-bold m-0"><i class="bi bi-train-front text-info me-2"></i><?php echo $search_performed ? count($results) . ' Trains Found' : ($is_personalized ? 'Recommended Trains' : 'Popular Trains'); ?></h4>
+                <?php if (isset($search_note)): ?>
+                    <div class="text-info small mt-1"><i class="bi bi-info-circle me-1"></i><?php echo $search_note; ?></div>
+                <?php endif; ?>
+            </div>
+            <div class="text-muted small"><?php echo $search_performed ? (htmlspecialchars($from) . ' <i class="bi bi-arrow-right"></i> ' . htmlspecialchars($to)) : ($is_personalized ? 'Based on your travel history' : 'Recommended trains for your journey'); ?></div>
         </div>
 
         <?php if (empty($results) && $search_performed): ?>

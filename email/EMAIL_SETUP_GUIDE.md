@@ -18,6 +18,7 @@ Edit the file: `config/mail_config.php`
 define('MAIL_USERNAME', 'your-email@gmail.com');      // ← Change this
 define('MAIL_PASSWORD', 'your-16-digit-app-password'); // ← Change this
 define('MAIL_FROM_EMAIL', 'your-email@gmail.com');    // ← Change this
+define('APP_URL', 'http://localhost/SGP-vijay_new');   // ← Change this
 ```
 
 ### Step 2: Get Your Gmail App Password
@@ -33,7 +34,7 @@ define('MAIL_FROM_EMAIL', 'your-email@gmail.com');    // ← Change this
 ## 📁 File Structure Created
 
 ```
-SGP/
+SGP-vijay_new/
 ├── config/
 │   └── mail_config.php                 (Gmail SMTP Configuration)
 ├── migrations/
@@ -179,7 +180,7 @@ All email templates are professionally designed with:
 ## 🧪 TESTING GUIDE
 
 ### Test 1: Email Verification
-1. Go to `http://localhost/SGP/register.html`
+1. Go to `http://localhost/SGP-vijay_new/register.html`
 2. Fill in the registration form with a **real email** (use your Gmail)
 3. Submit registration
 4. You should receive a verification code email
@@ -194,7 +195,7 @@ All email templates are professionally designed with:
 4. You should see "Please verify your email first"
 
 ### Test 3: Password Reset
-1. Go to `http://localhost/SGP/forgot_password.html`
+1. Go to `http://localhost/SGP-vijay_new/forgot_password.html`
 2. Enter your email
 3. Submit
 4. Check your email for reset link

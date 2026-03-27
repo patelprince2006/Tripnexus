@@ -1,8 +1,8 @@
 <?php
 session_start();
-include '../database/db.php';
-require_once '../email/EmailService.php';
-require_once '../email/mail_config.php';
+require_once __DIR__ . '/../database/db.php';
+require_once __DIR__ . '/../email/EmailService.php';
+require_once __DIR__ . '/../email/mail_config.php';
 
 // Check if email is provided (from form or session)
 $email = null;
@@ -19,7 +19,7 @@ if (!$email) {
 }
 
 // Check if database is connected
-if (!DB_CONNECTED) {
+if (!defined('DB_CONNECTED') || !DB_CONNECTED) {
     echo "<script>alert('Database connection failed. Please try again later.'); history.back();</script>";
     exit();
 }
@@ -70,7 +70,7 @@ if ($emailSent) {
     echo "<script>alert('Failed to send email. Please try again.'); history.back();</script>";
 }
 
-if (DB_CONNECTED) {
+if (defined('DB_CONNECTED') && DB_CONNECTED) {
     db_close($conn);
 }
 ?>

@@ -1,13 +1,13 @@
 <?php
 session_start();
-require '../database/db.php';
+require_once __DIR__ . '/../database/db.php';
 
 $booking_id = $_GET['booking_id'];
 $booking = null;
 $error_msg = null;
 
 // Fetch booking info to show the user
-if (DB_CONNECTED) {
+if (defined('DB_CONNECTED') && DB_CONNECTED) {
     $res = db_query($conn, "SELECT * FROM bookings WHERE id = ?", array($booking_id));
     $booking = db_fetch_assoc($res);
 } else {

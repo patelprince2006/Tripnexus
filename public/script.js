@@ -29,8 +29,11 @@ function updatePasswordIndicator(passwordInput) {
     const password = passwordInput.value;
     const { rules } = validatePasswordStrength(password);
 
-    // Find the indicator container (sibling of the input group)
-    const container = passwordInput.closest('.mb-3, .mb-4') || passwordInput.parentElement.parentElement;
+    // Find the closest wrapper (mb-3 or mb-4)
+    const container = passwordInput.closest('.mb-3, .mb-4');
+    if (!container) return;
+    
+    // Look for existing indicator specifically within the container
     let indicator = container.querySelector('.pwd-strength-indicator');
 
     // Create indicator if it doesn't exist
@@ -48,9 +51,13 @@ function updatePasswordIndicator(passwordInput) {
                 <div class="pwd-rule" data-rule="special"><span class="pwd-icon">○</span> At least one special character (!@#$%^&*)</div>
             </div>
         `;
-        // Insert after password input group
-        const inputGroup = passwordInput.closest('.input-group') || passwordInput.parentElement;
-        inputGroup.parentElement.insertBefore(indicator, inputGroup.nextSibling);
+        // Insert after the input group
+        const inputGroup = container.querySelector('.input-group');
+        if (inputGroup) {
+            inputGroup.after(indicator);
+        } else {
+            container.appendChild(indicator);
+        }
     }
 
     if (password.length === 0) {
@@ -222,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Swaps the values between From and To inputs for Flights
+// swapper
 function swapLocations() {
     const from = document.getElementById('flightFrom');
     const to = document.getElementById('flightTo');
@@ -233,7 +240,6 @@ function swapLocations() {
     }
 }
 
-// Swaps the values between From and To inputs for Buses
 function swapBusLocations() {
     const from = document.getElementById('busFrom');
     const to = document.getElementById('busTo');
@@ -244,7 +250,6 @@ function swapBusLocations() {
     }
 }
 
-// Swaps the values between From and To inputs for Trains
 function swapTrainLocations() {
     const from = document.getElementById('trainFrom');
     const to = document.getElementById('trainTo');
@@ -271,53 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Enables or disables the Return date field based on trip type
-function toggleFlightReturn(isRoundTrip) {
-    const container = document.getElementById('flightReturnDateGroup');
-    const input = document.getElementById('flightReturnDate');
-    if (!container || !input) return;
 
-    if (isRoundTrip) {
-        container.style.opacity = "1";
-        input.disabled = false;
-        input.required = true;
-    } else {
-        container.style.opacity = "0.5";
-        input.disabled = true;
-        input.required = false;
-        input.value = "";
-    }
-}
-
-function toggleBusReturn(isRoundTrip) {
-    const container = document.getElementById('busReturnDateGroup');
-    const input = document.getElementById('busReturnDate');
-    if (!container || !input) return;
-
-    if (isRoundTrip) {
-        container.style.opacity = "1";
-        input.disabled = false;
-        input.required = true;
-    } else {
-        container.style.opacity = "0.5";
-        input.disabled = true;
-        input.required = false;
-        input.value = "";
-    }
-}
-
-// Initialize toggles on page load
-document.addEventListener('DOMContentLoaded', () => {
-    const flightRoundTrip = document.getElementById('roundTrip');
-    if (flightRoundTrip) {
-        toggleFlightReturn(flightRoundTrip.checked);
-    }
-
-    const busRoundTrip = document.getElementById('busRoundTrip');
-    if (busRoundTrip) {
-        toggleBusReturn(busRoundTrip.checked);
-    }
-});
 
 // Keep return date >= departure date (and >= today)
 document.addEventListener('DOMContentLoaded', () => {
@@ -340,17 +299,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Flight (home + search page)
     const flightDep = document.getElementById('flightDepartureDate');
     const flightReturn = document.getElementById('flightReturnDate') || document.getElementById('returnDate');
-    applyMinDate(flightDep, flightReturn);
-    if (flightDep) {
-        flightDep.addEventListener('change', () => applyMinDate(flightDep, flightReturn));
+    if (flightReturn) {
+        applyMinDate(flightDep, flightReturn);
+        if (flightDep) {
+            flightDep.addEventListener('change', () => applyMinDate(flightDep, flightReturn));
+        }
     }
 
     // Bus (home)
     const busDep = document.getElementById('busDepartureDate');
     const busReturn = document.getElementById('busReturnDate');
-    applyMinDate(busDep, busReturn);
-    if (busDep) {
-        busDep.addEventListener('change', () => applyMinDate(busDep, busReturn));
+    if (busReturn) {
+        applyMinDate(busDep, busReturn);
+        if (busDep) {
+            busDep.addEventListener('change', () => applyMinDate(busDep, busReturn));
+        }
     }
 
     // Hotel (home)

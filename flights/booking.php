@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../database/db.php';
+require_once __DIR__ . '/../database/db.php';
 
 if (!isset($_SESSION['user_id'])) {
     echo "<script>alert('Please login to continue booking.'); window.location='../user/login.html';</script>";
@@ -22,7 +22,7 @@ if ($booking_type === '' || $reference_id <= 0 || $total_amount <= 0) {
     exit;
 }
 
-if (!DB_CONNECTED) {
+if (!defined('DB_CONNECTED') || !DB_CONNECTED) {
     echo "<script>alert('Database connection failed. Booking not created.'); window.location='../index.php';</script>";
     exit;
 }

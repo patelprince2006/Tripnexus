@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../database/db.php';
+require_once __DIR__ . '/../database/db.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST['email']);
@@ -27,5 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "<script>alert('No account found with this email'); history.back();</script>";
     }
 }
-db_close($conn);
+if (defined('DB_CONNECTED') && DB_CONNECTED) {
+    db_close($conn);
+}
 ?>

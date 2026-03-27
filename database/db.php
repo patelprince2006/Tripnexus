@@ -20,8 +20,12 @@ if (!$conn) {
 // 1. Create Database if not exists
 mysqli_query($conn, "CREATE DATABASE IF NOT EXISTS `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 
-// 2. Select the database
+// Select the database
 mysqli_select_db($conn, $dbname);
+
+// Set consistent timezone for both PHP and MySQL
+date_default_timezone_set('Asia/Kolkata');
+mysqli_query($conn, "SET time_zone = '+05:30'");
 
 // 3. Auto-Setup Tables and Sample Data if 'users' table is missing
 $check_table = mysqli_query($conn, "SHOW TABLES LIKE 'users'");

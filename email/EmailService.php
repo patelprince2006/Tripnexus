@@ -42,11 +42,11 @@ class EmailService {
         }
 
         $body = file_get_contents($templateFile);
-        $body = str_replace(
-            ['{{fullname}}', '{{verification_code}}', '{{expiry_minutes}}'],
-            [$fullname, $verificationCode, VERIFICATION_CODE_EXPIRY],
-            $body
-        );
+        $body = $this->parseTemplate($body, [
+            '{{fullname}}' => $fullname,
+            '{{verification_code}}' => $verificationCode,
+            '{{expiry_minutes}}' => VERIFICATION_CODE_EXPIRY
+        ]);
 
         return $this->send($toEmail, $subject, $body);
     }
@@ -58,7 +58,7 @@ class EmailService {
         if (!ENABLE_EMAIL) return true;
 
         $subject = 'Reset Your Password - TripNexus';
-        $resetLink = APP_URL . '/new_password.html?token=' . $resetToken;
+        $resetLink = APP_URL . '/user/new_password.php?token=' . $resetToken;
         $templateFile = __DIR__ . '/email_templates/password_reset_email.html';
         
         if (!file_exists($templateFile)) {
@@ -67,11 +67,11 @@ class EmailService {
         }
 
         $body = file_get_contents($templateFile);
-        $body = str_replace(
-            ['{{fullname}}', '{{reset_link}}', '{{expiry_minutes}}'],
-            [$fullname, $resetLink, RESET_TOKEN_EXPIRY],
-            $body
-        );
+        $body = $this->parseTemplate($body, [
+            '{{fullname}}' => $fullname,
+            '{{reset_link}}' => $resetLink,
+            '{{expiry_minutes}}' => RESET_TOKEN_EXPIRY
+        ]);
 
         return $this->send($toEmail, $subject, $body);
     }
@@ -91,11 +91,10 @@ class EmailService {
         }
 
         $body = file_get_contents($templateFile);
-        $body = str_replace(
-            ['{{fullname}}', '{{booking_details}}'],
-            [$fullname, $this->formatBookingDetails($bookingDetails)],
-            $body
-        );
+        $body = $this->parseTemplate($body, [
+            '{{fullname}}' => $fullname,
+            '{{booking_details}}' => $this->formatBookingDetails($bookingDetails)
+        ]);
 
         return $this->send($toEmail, $subject, $body);
     }
@@ -115,13 +114,27 @@ class EmailService {
         }
 
         $body = file_get_contents($templateFile);
-        $body = str_replace(
-            ['{{fullname}}', '{{order_details}}'],
-            [$fullname, $this->formatOrderDetails($orderDetails)],
-            $body
-        );
+        $body = $this->parseTemplate($body, [
+            '{{fullname}}' => $fullname,
+            '{{order_details}}' => $this->formatOrderDetails($orderDetails)
+        ]);
 
         return $this->send($toEmail, $subject, $body);
+    }
+
+    /**
+     * Parse template with placeholders
+     */
+    private function parseTemplate($body, $replacements) {
+        // Global replacements
+        $replacements['{APP_URL}'] = APP_URL;
+        $replacements['{APP_NAME}'] = APP_NAME;
+        
+        return str_replace(
+            array_keys($replacements),
+            array_values($replacements),
+            $body
+        );
     }
 
     /**

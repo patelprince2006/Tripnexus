@@ -32,11 +32,54 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     $search_performed = true;
 } else {
-    // Default: Show all tours
-    $res = db_query($conn, "SELECT * FROM tour_packages ORDER BY created_at DESC");
-    if ($res) {
-        while ($row = db_fetch_assoc($res)) {
-            $results[] = $row;
+    // Recommendation System: Show personalized or popular tours
+    $is_personalized = false;
+
+    if (isset($_SESSION['user_id'])) {
+        $uid = $_SESSION['user_id'];
+        // 1. Get locations from recent bookings
+        $history_res = db_query($conn, "SELECT DISTINCT location FROM bookings b 
+                                       JOIN tour_packages t ON b.reference_id = t.id 
+                                       WHERE b.user_id = ? AND b.booking_type = 'tour' 
+                                       ORDER BY b.booking_date DESC LIMIT 5", [$uid]);
+        $pref_locs = [];
+        while ($h = db_fetch_assoc($history_res)) {
+            $pref_locs[] = $h['location'];
+        }
+
+        // 2. Get locations from wishlist
+        $wish_res = db_query($conn, "SELECT DISTINCT location FROM wishlist w 
+                                    JOIN tour_packages t ON w.item_id = t.id 
+                                    WHERE w.user_id = ? AND w.item_type = 'tour' LIMIT 5", [$uid]);
+        while ($w = db_fetch_assoc($wish_res)) {
+            $pref_locs[] = $w['location'];
+        }
+
+        $pref_locs = array_unique(array_filter($pref_locs));
+
+        if (!empty($pref_locs)) {
+            $placeholders = implode(',', array_fill(0, count($pref_locs), '?'));
+            $rec_query = "SELECT * FROM tour_packages 
+                         WHERE location IN ($placeholders)
+                         ORDER BY name ASC LIMIT 6";
+            $rec_res = db_query($conn, $rec_query, $pref_locs);
+            if ($rec_res && mysqli_num_rows($rec_res) > 0) {
+                while ($row = db_fetch_assoc($rec_res)) {
+                    $results[] = $row;
+                }
+                $is_personalized = true;
+            }
+        }
+    }
+
+    if (empty($results)) {
+        // Fallback: Show most recent or popular tours
+        $popular_query = "SELECT * FROM tour_packages ORDER BY created_at DESC LIMIT 6";
+        $pop_res = db_query($conn, $popular_query);
+        if ($pop_res) {
+            while ($row = db_fetch_assoc($pop_res)) {
+                $results[] = $row;
+            }
         }
     }
 }
@@ -167,7 +210,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <?php if ($search_performed): ?>
             <h3 class="fw-bold mb-4">Search Results for "<?php echo htmlspecialchars($location); ?>"</h3>
         <?php else: ?>
-            <h3 class="fw-bold mb-4">All Tour Packages</h3>
+            <h3 class="fw-bold mb-4"><?php echo $is_personalized ? 'Recommended Tours for You' : 'Trending Tour Packages'; ?></h3>
         <?php endif; ?>
 
         <?php if (empty($results)): ?>

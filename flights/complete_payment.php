@@ -1,9 +1,9 @@
 <?php
 session_start();
-require '../database/db.php';
+require_once __DIR__ . '/../database/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!DB_CONNECTED) {
+    if (!defined('DB_CONNECTED') || !DB_CONNECTED) {
         header("Location: ../user/my_booking_standlone.php?error=Database%20connection%20failed");
         exit();
     }

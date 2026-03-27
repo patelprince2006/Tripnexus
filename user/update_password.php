@@ -1,8 +1,8 @@
 <?php
 session_start();
-include '../database/db.php';
-require_once '../email/EmailService.php';
-require_once '../email/mail_config.php';
+require_once __DIR__ . '/../database/db.php';
+require_once __DIR__ . '/../email/EmailService.php';
+require_once __DIR__ . '/../email/mail_config.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $token = trim($_POST['token']);
@@ -38,17 +38,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Check if database is connected
-    if (!DB_CONNECTED) {
+    if (!defined('DB_CONNECTED') || !DB_CONNECTED) {
         echo "<script>alert('Database connection failed. Please try again later.'); history.back();</script>";
         exit();
     }
 
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    $currentTime = date("Y-m-d H:i:s");
 
     // Find user by reset token and check expiry
     $checkQuery = db_prepare($conn, "check_token", 
-        'SELECT id, email, fullname FROM users WHERE reset_token = ? AND token_expiry > NOW()');
-    $checkResult = db_execute($conn, "check_token", array($token));
+        'SELECT id, email, fullname FROM users WHERE reset_token = ? AND token_expiry > ? LIMIT 1');
+    $checkResult = db_execute($conn, "check_token", array($token, $currentTime));
 
     if (!$checkResult || db_num_rows($checkResult) === 0) {
         echo "<script>alert('Invalid or expired reset link. Please request a new one.'); window.location='forgot_password.html';</script>";
@@ -77,7 +78,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-if (DB_CONNECTED) {
+if (defined('DB_CONNECTED') && DB_CONNECTED) {
     db_close($conn);
 }
 ?>

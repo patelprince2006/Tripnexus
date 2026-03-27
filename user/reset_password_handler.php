@@ -1,8 +1,8 @@
 <?php
 session_start();
-include '../database/db.php';
-require_once '../email/EmailService.php';
-require_once '../email/mail_config.php';
+require_once __DIR__ . '/../database/db.php';
+require_once __DIR__ . '/../email/EmailService.php';
+require_once __DIR__ . '/../email/mail_config.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = filter_var(trim($_POST["email"]), FILTER_VALIDATE_EMAIL);
@@ -13,7 +13,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Check if database is connected
-    if (!DB_CONNECTED) {
+    if (!defined('DB_CONNECTED') || !DB_CONNECTED) {
         echo "<script>alert('Database connection failed. Please try again later.'); history.back();</script>";
         exit();
     }
@@ -38,7 +38,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($updateResult) {
             // Send password reset email
             $emailService = new EmailService($conn);
-            $resetLink = APP_URL . '/new_password.html?token=' . $token;
             $emailSent = $emailService->sendPasswordResetEmail($email, $fullname, $token);
 
             if ($emailSent) {
@@ -58,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-if (DB_CONNECTED) {
+if (defined('DB_CONNECTED') && DB_CONNECTED) {
     db_close($conn);
 }
 ?>
