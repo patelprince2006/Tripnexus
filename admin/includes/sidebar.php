@@ -26,9 +26,9 @@
             <li class="<?php echo ($active_page == 'payments') ? 'active' : ''; ?>">
                 <a href="payments.php"><i class="fas fa-credit-card"></i> Payments</a>
             </li>
-            <li class="<?php echo ($active_page == 'reviews') ? 'active' : ''; ?>">
+            <!-- <li class="<?php echo ($active_page == 'reviews') ? 'active' : ''; ?>">
                 <a href="reviews.php"><i class="fas fa-star"></i> Reviews</a>
-            </li>
+            </li> -->
             <li class="<?php echo ($active_page == 'notifications') ? 'active' : ''; ?>">
                 <a href="notifications.php"><i class="fas fa-bell"></i> Notifications</a>
             </li>

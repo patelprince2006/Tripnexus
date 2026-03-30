@@ -15,17 +15,62 @@ $msg_type = 'success';
 
 // Handle Profile Update
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_profile'])) {
-    $new_fullname = trim($_POST['fullname']);
+    $first_name = trim($_POST['first_name']);
+    $last_name = trim($_POST['last_name']);
+    $fullname = trim($first_name . ' ' . $last_name);
+    $gender = $_POST['gender'];
+    $dob = $_POST['dob'];
+    $nationality = trim($_POST['nationality']);
+    $marital_status = $_POST['marital_status'];
+    $city_of_residence = trim($_POST['city_of_residence']);
+    $booker_type = $_POST['booker_type'];
     $phone = trim($_POST['phone']);
+    $passport_no = trim($_POST['passport_no']);
+    $expiry_date = $_POST['expiry_date'];
+    $issuing_country = trim($_POST['issuing_country']);
     $theme = $_POST['theme'] ?? 'light';
 
-    $sql = "UPDATE users SET fullname = ?, phone = ?, theme = ? WHERE id = ?";
-    $result = db_query($conn, $sql, array($new_fullname, $phone, $theme, $user_id));
+    $sql = "UPDATE users SET 
+            fullname = ?, 
+            first_name = ?, 
+            last_name = ?, 
+            gender = ?, 
+            dob = ?, 
+            nationality = ?, 
+            marital_status = ?, 
+            city_of_residence = ?, 
+            booker_type = ?, 
+            phone = ?, 
+            passport_no = ?, 
+            expiry_date = ?, 
+            issuing_country = ?, 
+            theme = ? 
+            WHERE id = ?";
+            
+    $params = [
+        $fullname, 
+        $first_name, 
+        $last_name, 
+        $gender, 
+        $dob, 
+        $nationality, 
+        $marital_status, 
+        $city_of_residence, 
+        $booker_type, 
+        $phone, 
+        $passport_no, 
+        $expiry_date, 
+        $issuing_country, 
+        $theme, 
+        $user_id
+    ];
+
+    $result = db_query($conn, $sql, $params);
 
     if ($result) {
-        $_SESSION['fullname'] = $new_fullname;
+        $_SESSION['fullname'] = $fullname;
         $_SESSION['theme'] = $theme;
-        $msg = "Experience updated successfully!";
+        $msg = "Profile updated successfully!";
         $msg_type = 'success';
     } else {
         $msg = "Failed to update settings.";
@@ -189,15 +234,17 @@ $theme = $user['theme'] ?? 'light';
     <!-- Hero Section -->
     <div class="settings-hero">
         <div class="container">
-            <h1 class="display-5 fw-bold mb-2">Experience Your Space</h1>
-            <p class="lead opacity-75">Personalize your journey with TripNexus</p>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="display-6 fw-bold mb-0 text-start">My Profile</h1>
+                <button type="submit" form="profileForm" name="update_profile" class="btn btn-sm px-4 fw-bold" style="background: #ccc; border-radius: 8px;">SAVE</button>
+            </div>
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="container pb-5">
         <div class="row justify-content-center">
-            <div class="col-lg-7">
+            <div class="col-lg-10">
                 
                 <?php if ($msg): ?>
                     <div class="alert alert-<?php echo $msg_type; ?> border-0 shadow-sm mb-4 rounded-4 p-3 animate__animated animate__fadeIn">
@@ -206,47 +253,150 @@ $theme = $user['theme'] ?? 'light';
                     </div>
                 <?php endif; ?>
 
-                <form method="POST">
-                    <!-- Profile Section -->
-                    <div class="settings-card mb-4 p-4 p-md-5">
-                        <div class="d-flex align-items-center mb-4">
-                            <div class="icon-box bg-primary bg-opacity-10 text-primary">
-                                <i class="bi bi-person-badge fs-4"></i>
+                <form method="POST" id="profileForm">
+                    <!-- General Information Section -->
+                    <div class="mb-5">
+                        <h5 class="fw-bold mb-3">General Information</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="bg-white p-2 rounded-3 border">
+                                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">First & Middle Name</label>
+                                    <input type="text" name="first_name" class="form-control border-0 p-0 fw-bold" value="<?php echo htmlspecialchars($user['first_name'] ?? ''); ?>" placeholder="Enter name">
+                                </div>
                             </div>
-                            <h4 class="mb-0 fw-bold">Identity Details</h4>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Display Name</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                <input type="text" name="fullname" class="form-control" value="<?php echo htmlspecialchars($user['fullname'] ?? ''); ?>" required>
+                            <div class="col-md-6">
+                                <div class="bg-white p-2 rounded-3 border">
+                                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Last Name</label>
+                                    <input type="text" name="last_name" class="form-control border-0 p-0 fw-bold" value="<?php echo htmlspecialchars($user['last_name'] ?? ''); ?>" placeholder="Enter last name">
+                                </div>
                             </div>
-                        </div>
-
-                        <div class="mb-0">
-                            <label class="form-label fw-bold">Contact Number</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-phone"></i></span>
-                                <input type="text" name="phone" class="form-control" value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>" placeholder="Enter phone number">
+                            <div class="col-md-3">
+                                <div class="bg-white p-2 rounded-3 border">
+                                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Gender</label>
+                                    <select name="gender" class="form-select border-0 p-0 fw-bold shadow-none">
+                                        <option value="">GENDER</option>
+                                        <option value="Male" <?php echo ($user['gender'] ?? '') == 'Male' ? 'selected' : ''; ?>>Male</option>
+                                        <option value="Female" <?php echo ($user['gender'] ?? '') == 'Female' ? 'selected' : ''; ?>>Female</option>
+                                        <option value="Other" <?php echo ($user['gender'] ?? '') == 'Other' ? 'selected' : ''; ?>>Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="bg-white p-2 rounded-3 border">
+                                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Date of Birth</label>
+                                    <input type="date" name="dob" class="form-control border-0 p-0 fw-bold" value="<?php echo htmlspecialchars($user['dob'] ?? ''); ?>">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="bg-white p-2 rounded-3 border">
+                                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Nationality</label>
+                                    <select name="nationality" class="form-select border-0 p-0 fw-bold shadow-none">
+                                        <option value="">NATIONALITY</option>
+                                        <option value="Indian" <?php echo ($user['nationality'] ?? '') == 'Indian' ? 'selected' : ''; ?>>Indian</option>
+                                        <option value="American" <?php echo ($user['nationality'] ?? '') == 'American' ? 'selected' : ''; ?>>American</option>
+                                        <option value="British" <?php echo ($user['nationality'] ?? '') == 'British' ? 'selected' : ''; ?>>British</option>
+                                        <!-- Add more options as needed -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="bg-white p-2 rounded-3 border">
+                                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Marital Status</label>
+                                    <select name="marital_status" class="form-select border-0 p-0 fw-bold shadow-none">
+                                        <option value="">MARITAL STATUS</option>
+                                        <option value="Single" <?php echo ($user['marital_status'] ?? '') == 'Single' ? 'selected' : ''; ?>>Single</option>
+                                        <option value="Married" <?php echo ($user['marital_status'] ?? '') == 'Married' ? 'selected' : ''; ?>>Married</option>
+                                        <option value="Divorced" <?php echo ($user['marital_status'] ?? '') == 'Divorced' ? 'selected' : ''; ?>>Divorced</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="bg-white p-2 rounded-3 border">
+                                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">City of Residence</label>
+                                    <input type="text" name="city_of_residence" class="form-control border-0 p-0 fw-bold" value="<?php echo htmlspecialchars($user['city_of_residence'] ?? ''); ?>" placeholder="CITY OF RESIDENCE">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="bg-white p-2 rounded-3 border">
+                                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Booker Type</label>
+                                    <select name="booker_type" class="form-select border-0 p-0 fw-bold shadow-none">
+                                        <option value="">Booker Type</option>
+                                        <option value="Leisure" <?php echo ($user['booker_type'] ?? '') == 'Leisure' ? 'selected' : ''; ?>>Leisure</option>
+                                        <option value="Business" <?php echo ($user['booker_type'] ?? '') == 'Business' ? 'selected' : ''; ?>>Business</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Atmosphere Section -->
-                    <div class="settings-card mb-5 p-4 p-md-5">
-                        <div class="d-flex align-items-center mb-4">
-                            <div class="icon-box bg-warning bg-opacity-10 text-warning">
-                                <i class="bi bi-palette fs-4"></i>
+                    <!-- Contact Details Section -->
+                    <div class="mb-5">
+                        <h5 class="fw-bold mb-1">Contact Details</h5>
+                        <p class="text-muted small mb-3">Add contact information to receive booking details & other alerts</p>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="bg-white p-2 rounded-3 border">
+                                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Mobile Number</label>
+                                    <input type="text" name="phone" class="form-control border-0 p-0 fw-bold" value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>" placeholder="Enter mobile number">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="bg-white p-2 rounded-3 border d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <label class="form-label small text-muted text-uppercase fw-bold mb-1">Email ID</label>
+                                        <input type="email" class="form-control border-0 p-0 fw-bold" value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>" readonly>
+                                    </div>
+                                    <div class="text-success ms-2">
+                                        <i class="bi bi-check-lg fs-5"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Documents Details Section -->
+                    <div class="mb-5">
+                        <h5 class="fw-bold mb-3">Documents Details</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="bg-white p-2 rounded-3 border">
+                                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Passport No.</label>
+                                    <input type="text" name="passport_no" class="form-control border-0 p-0 fw-bold" value="<?php echo htmlspecialchars($user['passport_no'] ?? ''); ?>" placeholder="PASSPORT NO.">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="bg-white p-2 rounded-3 border">
+                                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Expiry Date</label>
+                                    <input type="date" name="expiry_date" class="form-control border-0 p-0 fw-bold" value="<?php echo htmlspecialchars($user['expiry_date'] ?? ''); ?>">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="bg-white p-2 rounded-3 border">
+                                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Issuing Country</label>
+                                    <select name="issuing_country" class="form-select border-0 p-0 fw-bold shadow-none">
+                                        <option value="">ISSUING COUNTRY</option>
+                                        <option value="India" <?php echo ($user['issuing_country'] ?? '') == 'India' ? 'selected' : ''; ?>>India</option>
+                                        <option value="USA" <?php echo ($user['issuing_country'] ?? '') == 'USA' ? 'selected' : ''; ?>>USA</option>
+                                        <!-- Add more options as needed -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Atmosphere Section (Moved to bottom or kept) -->
+                    <div class="settings-card mb-5 p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-box bg-warning bg-opacity-10 text-warning" style="width: 40px; height: 40px;">
+                                <i class="bi bi-palette fs-5"></i>
                             </div>
                             <div>
-                                <h4 class="mb-0 fw-bold">Atmosphere</h4>
-                                <small class="text-muted">Choose your visual environment</small>
+                                <h6 class="mb-0 fw-bold">Atmosphere</h6>
+                                <small class="text-muted">Visual environment</small>
                             </div>
                         </div>
 
                         <div class="mb-0">
-                            <label class="form-label fw-bold">Theme Preference</label>
                             <select name="theme" class="form-select shadow-none">
                                 <option value="light" <?php echo ($theme == 'light') ? 'selected' : ''; ?>>☀️ Radiant Light</option>
                                 <option value="dark" <?php echo ($theme == 'dark') ? 'selected' : ''; ?>>🌑 Deep Space (Dark Mode)</option>
@@ -254,12 +404,12 @@ $theme = $user['theme'] ?? 'light';
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
-                    <button type="submit" name="update_profile" class="btn btn-update w-100 shadow-sm">
-                        Update My Experience
+                    <!-- Submit Button (Sticky or at bottom) -->
+                    <button type="submit" name="update_profile" class="btn btn-update w-100 shadow-sm mb-4">
+                        Update Profile
                     </button>
                     
-                    <div class="text-center mt-4">
+                    <div class="text-center">
                         <a href="dashboard.php" class="text-decoration-none text-muted small">
                             <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
                         </a>

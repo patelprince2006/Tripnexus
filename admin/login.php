@@ -43,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     header("Location: dashboard.php");
                     exit();
                 } else {
-                    $error = "Invalid password. If you forgot your password, you can <a href='setup_admin_db.php' class='text-primary'>reset it to admin123 here</a>.";
+                    $error = "Invalid password.";
                 }
             } else {
                 $error = "User not found.";
@@ -242,6 +242,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <?php endif; ?>
 
             <form method="POST" action="">
+                <div class="mb-3">
+                    <label class="form-label">GSTIN NO</label>
+                    <input type="text" name="gstin" class="form-control" placeholder="Enter GSTIN Number" 
+                           minlength="15" maxlength="15" 
+                           pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$" 
+                           title="Please enter a valid 15-character GSTIN (e.g., 22AAAAA0000A1Z5)">
+                </div>
                 <div class="mb-3">
                     <label class="form-label">Username</label>
                     <input type="text" name="username" class="form-control" required placeholder="Enter username">
