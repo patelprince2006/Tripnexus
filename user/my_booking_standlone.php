@@ -11,6 +11,13 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $fullname = $_SESSION['fullname'];
 
+// Handle status filtering
+$selected_status = isset($_GET['status']) ? $_GET['status'] : 'all';
+$status_filter = "";
+if ($selected_status !== 'all') {
+    $status_filter = " AND b.status = ?";
+}
+
 $stats = [
     'total_bookings' => 0,
     'confirmed_bookings' => 0,
@@ -62,9 +69,15 @@ if (defined('DB_CONNECTED') && DB_CONNECTED) {
             LEFT JOIN flights f ON b.booking_type = 'flight' AND b.reference_id = f.flight_id
             LEFT JOIN hotels h ON b.booking_type = 'hotel' AND b.reference_id = h.hotel_id
             LEFT JOIN tour_packages t ON b.booking_type = 'tour' AND b.reference_id = t.id
-            WHERE b.user_id = ?
+            WHERE b.user_id = ?" . $status_filter . "
             ORDER BY b.booking_date DESC";
-        $list_res = db_query($conn, $list_query, array($user_id));
+            
+        $params = array($user_id);
+        if ($selected_status !== 'all') {
+            $params[] = $selected_status;
+        }
+        
+        $list_res = db_query($conn, $list_query, $params);
         if ($list_res) {
             while ($row = db_fetch_assoc($list_res)) {
                 $bookings[] = $row;
@@ -268,8 +281,10 @@ if (defined('DB_CONNECTED') && DB_CONNECTED) {
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="mb-0 fw-bold">Recent Bookings</h5>
                             <div class="d-flex gap-2">
-                                <span class="badge bg-light text-dark">All Services</span>
-                                <span class="badge bg-primary">Latest First</span>
+                                <a href="?status=all" class="badge text-decoration-none <?php echo $selected_status == 'all' ? 'bg-primary' : 'bg-light text-dark'; ?>">All</a>
+                                <a href="?status=confirmed" class="badge text-decoration-none <?php echo $selected_status == 'confirmed' ? 'bg-success' : 'bg-light text-dark'; ?>">Confirmed</a>
+                                <a href="?status=pending" class="badge text-decoration-none <?php echo $selected_status == 'pending' ? 'bg-warning' : 'bg-light text-dark'; ?>">Pending</a>
+                                <a href="?status=cancelled" class="badge text-decoration-none <?php echo $selected_status == 'cancelled' ? 'bg-danger' : 'bg-light text-dark'; ?>">Cancelled</a>
                             </div>
                         </div>
                     </div>
