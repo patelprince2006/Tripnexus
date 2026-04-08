@@ -127,6 +127,8 @@ CREATE TABLE IF NOT EXISTS `hotels` (
     `rating` DECIMAL(2, 1) DEFAULT 0,
     `amenities` TEXT,
     `main_image` TEXT,
+    `latitude` DECIMAL(10, 8),
+    `longitude` DECIMAL(11, 8),
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
