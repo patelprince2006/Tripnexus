@@ -71,7 +71,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Send verification email
     $emailService = new EmailService($conn);
     if ($emailService->sendVerificationEmail($email, $fullname, $verificationCode)) {
-        echo "<script>alert('Registration successful! A verification code has been sent to your email.'); window.location='verify_email.html?email=" . urlencode($email) . "';</script>";
+        echo "<script>alert('Registration successful! A verification code has been sent to your email.'); window.location='verify_email_ui.php?email=" . urlencode($email) . "';</script>";
     } else {
         echo "<script>alert('Registration successful, but failed to send verification email. Please try to resend it from the login page.'); window.location='login.html';</script>";
     }

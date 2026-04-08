@@ -80,14 +80,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $rating = $hotel['overall_rating'] ?? 4.0;
                 $description = $hotel['description'] ?? 'Stay at ' . $hotel_name;
                 $thumbnail = $hotel['thumbnail'] ?? '../photos/hotel1.jpg';
+                $lat = $hotel['gps_coordinates']['latitude'] ?? null;
+                $lng = $hotel['gps_coordinates']['longitude'] ?? null;
 
                 // Sync with local DB to allow booking
                 $check_res = db_query($conn, "SELECT hotel_id FROM hotels WHERE name = ?", [$hotel_name]);
                 $hotel_row = db_fetch_assoc($check_res);
                 
                 if (!$hotel_row) {
-                    db_query($conn, "INSERT INTO hotels (name, city, address, description, price_per_night, rating, main_image) VALUES (?, ?, ?, ?, ?, ?, ?)", 
-                        [$hotel_name, $city, $city, $description, $hotel_price, $rating, $thumbnail]);
+                    db_query($conn, "INSERT INTO hotels (name, city, address, description, price_per_night, rating, main_image, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                        [$hotel_name, $city, $city, $description, $hotel_price, $rating, $thumbnail, $lat, $lng]);
+                } else if ($lat && $lng) {
+                    db_query($conn, "UPDATE hotels SET latitude = ?, longitude = ? WHERE hotel_id = ?", [$lat, $lng, $hotel_row['hotel_id']]);
                 }
             }
         }
@@ -188,6 +192,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .hotel-card:hover {
             transform: scale(1.03);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+        }
+        #hotelMap {
+            /* height: 400px; */
+            width: 100%;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            z-index: 1;
+        }
+        .hotel-map-small {
+            height: 200px;
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
         }
     </style>
 </head>
@@ -310,6 +328,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <h4 class="fw-bold m-0"><i class="bi bi-building text-warning me-2"></i><?php echo count($results); ?> Hotels Found</h4>
                 <div class="text-muted small">in <?php echo htmlspecialchars($city); ?></div>
             </div>
+            
+            <!-- Map View Section -->
+            <div id="hotelMap" class="shadow-sm border"></div>
         <?php else: ?>
             <div class="d-flex justify-content-between align-items-center mb-4 mt-5">
                 <h4 class="fw-bold m-0"><i class="bi bi-star-fill text-warning me-2"></i><?php echo $is_personalized ? 'Recommended for You' : 'Featured Hotels'; ?></h4>
@@ -337,6 +358,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </div>
                             <p class="text-muted small mb-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i><?php echo htmlspecialchars($hotel['address']); ?>, <?php echo htmlspecialchars($hotel['city']); ?></p>
                             <p class="small text-secondary mb-4"><?php echo htmlspecialchars($hotel['amenities']); ?></p>
+                            
+                            <!-- Individual Hotel Map -->
+                            <div id="map-<?php echo $hotel['hotel_id']; ?>" class="hotel-map-small border shadow-sm"></div>
+
                             <div class="d-flex justify-content-between align-items-center pt-3 border-top">
                                 <div>
                                     <div class="text-muted" style="font-size: 0.7rem;">Price per night</div>
@@ -346,6 +371,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <?php $is_fav = in_array((int)$hotel['hotel_id'], $user_wishlist); ?>
                                     <button class="btn <?php echo $is_fav ? 'btn-danger' : 'btn-outline-secondary'; ?> btn-sm px-3 rounded-pill" onclick="toggleWishlist(this, 'hotel', <?php echo $hotel['hotel_id']; ?>, '<?php echo htmlspecialchars($hotel['name'], ENT_QUOTES); ?>')">
                                         <i class="bi <?php echo $is_fav ? 'bi-heart-fill' : 'bi-heart'; ?>"></i>
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm px-3 rounded-pill" onclick="toggleHotelMap(this, <?php echo $hotel['hotel_id']; ?>, <?php echo $hotel['latitude'] ?? 'null'; ?>, <?php echo $hotel['longitude'] ?? 'null'; ?>, '<?php echo addslashes($hotel['name']); ?>', '<?php echo addslashes($hotel['city']); ?>')">
+                                        <i class="bi bi-geo-alt"></i>
                                     </button>
                                     <form action="../flights/booking.php" method="POST">
                                         <input type="hidden" name="service_type" value="hotel">
@@ -371,7 +399,146 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Google Maps JS API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=45e155bbbfe3b191f3b06f74cac0667e"></script>
     <script src="../flights/wishlist_toggle.js"></script>
     <script src="../public/script.js"></script>
+
+    <script>
+        let mainMap;
+        const hotelMarkers = [];
+
+        function initMainMap() {
+            <?php if ($search_performed && !empty($results)): ?>
+                const hotels = <?php echo json_encode($results); ?>;
+                const validHotels = hotels.filter(h => h.latitude && h.longitude);
+                const geocoder = new google.maps.Geocoder();
+
+                mainMap = new google.maps.Map(document.getElementById('hotelMap'), {
+                    zoom: 12,
+                    center: { lat: 20.5937, lng: 78.9629 } // Default center
+                });
+
+                const bounds = new google.maps.LatLngBounds();
+                let markersCount = 0;
+
+                hotels.forEach(hotel => {
+                    if (hotel.latitude && hotel.longitude) {
+                        addHotelMarker(hotel, bounds);
+                        markersCount++;
+                    } else {
+                        // Geocode missing locations for the main map
+                        geocoder.geocode({ address: `${hotel.name}, ${hotel.city}` }, (results, status) => {
+                            if (status === 'OK') {
+                                hotel.latitude = results[0].geometry.location.lat();
+                                hotel.longitude = results[0].geometry.location.lng();
+                                addHotelMarker(hotel, bounds);
+                                markersCount++;
+                                if (markersCount === hotels.length) mainMap.fitBounds(bounds);
+                            }
+                        });
+                    }
+                });
+
+                if (validHotels.length > 0) {
+                    mainMap.fitBounds(bounds);
+                }
+            <?php endif; ?>
+        }
+
+        function addHotelMarker(hotel, bounds) {
+            const position = { lat: parseFloat(hotel.latitude), lng: parseFloat(hotel.longitude) };
+            const marker = new google.maps.Marker({
+                position: position,
+                map: mainMap,
+                title: hotel.name
+            });
+
+            const infoWindow = new google.maps.InfoWindow({
+                content: `
+                    <div style="min-width: 150px; padding: 5px;">
+                        <h6 class="fw-bold mb-1">${hotel.name}</h6>
+                        <p class="small text-muted mb-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i>${hotel.city}</p>
+                        <p class="fw-bold text-dark mb-0">₹${Number(hotel.price_per_night).toLocaleString()}</p>
+                    </div>
+                `
+            });
+
+            marker.addListener('click', () => {
+                infoWindow.open(mainMap, marker);
+            });
+
+            bounds.extend(position);
+            hotelMarkers.push(marker);
+            mainMap.fitBounds(bounds);
+        }
+
+        function toggleHotelMap(btn, hotelId, lat, lng, name, city) {
+            const mapDiv = document.getElementById(`map-${hotelId}`);
+            if (mapDiv.style.display === 'block') {
+                mapDiv.style.display = 'none';
+                btn.classList.remove('btn-info');
+                btn.classList.add('btn-outline-info');
+                return;
+            }
+
+            // Hide other small maps
+            document.querySelectorAll('.hotel-map-small').forEach(div => div.style.display = 'none');
+            document.querySelectorAll('.btn-info').forEach(b => {
+                if(b.onclick && b.onclick.toString().includes('toggleHotelMap')) {
+                    b.classList.remove('btn-info');
+                    b.classList.add('btn-outline-info');
+                }
+            });
+
+            mapDiv.style.display = 'block';
+            btn.classList.remove('btn-outline-info');
+            btn.classList.add('btn-info');
+
+            if (lat && lng) {
+                renderSmallMap(mapDiv, lat, lng, name);
+            } else {
+                // Use Geocoder if coordinates are missing
+                const geocoder = new google.maps.Geocoder();
+                mapDiv.innerHTML = '<div class="p-4 text-center"><div class="spinner-border spinner-border-sm text-primary"></div><span class="ms-2 small text-muted">Locating hotel...</span></div>';
+                
+                geocoder.geocode({ address: `${name}, ${city}` }, (results, status) => {
+                    if (status === 'OK') {
+                        const newLat = results[0].geometry.location.lat();
+                        const newLng = results[0].geometry.location.lng();
+                        renderSmallMap(mapDiv, newLat, newLng, name);
+                        
+                        // Optional: Send coordinates to server to update DB
+                        fetch('update_hotel_coords.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: `hotel_id=${hotelId}&lat=${newLat}&lng=${newLng}`
+                        });
+                    } else {
+                        mapDiv.innerHTML = '<div class="p-4 text-center text-muted small">Could not find location for this hotel.</div>';
+                    }
+                });
+            }
+        }
+
+        function renderSmallMap(mapDiv, lat, lng, name) {
+            const hotelPos = { lat: parseFloat(lat), lng: parseFloat(lng) };
+            const hotelMap = new google.maps.Map(mapDiv, {
+                zoom: 15,
+                center: hotelPos,
+                mapTypeControl: false,
+                streetViewControl: false
+            });
+
+            new google.maps.Marker({
+                position: hotelPos,
+                map: hotelMap,
+                title: name
+            });
+        }
+
+        // Initialize maps on load
+        window.onload = initMainMap;
+    </script>
 </body>
 </html>

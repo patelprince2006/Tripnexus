@@ -1,3 +1,23 @@
+<?php
+session_start();
+$email = isset($_GET['email']) ? htmlspecialchars($_GET['email']) : '';
+
+// Masking logic: shivamprajapati200711@gmail.com -> sh****************11@gmail.com
+$masked_email = $email;
+if ($email && strpos($email, '@') !== false) {
+    $parts = explode("@", $email);
+    $local = $parts[0];
+    $domain = $parts[1];
+    $len = strlen($local);
+    
+    if ($len > 4) {
+        $first = substr($local, 0, 2);
+        $last = substr($local, -2);
+        $masked_part = str_repeat("*", $len - 4);
+        $masked_email = $first . $masked_part . $last . "@" . $domain;
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -46,7 +66,7 @@
                             </div>
 
                             <p class="text-center text-muted small mb-4">
-                                We sent a verification code to your email. Enter it below to activate your account.
+                                We sent a verification code to your email <strong class="text-primary"><?php echo $masked_email; ?></strong>. Enter it below to activate your account.
                             </p>
 
                             <form action="verify_email.php" method="POST" id="verifyForm">
@@ -64,7 +84,7 @@
 
                                 <div class="text-center">
                                     <p class="small text-muted mb-2">Didn't receive the code?</p>
-                                    <a href="resend_verification.php" class="small text-decoration-none fw-bold" 
+                                    <a href="resend_verification.php<?php echo $email ? '?email=' . urlencode($email) : ''; ?>" class="small text-decoration-none fw-bold" 
                                        style="color: #0d2137;">Resend Code</a>
                                 </div>
                             </form>

@@ -294,9 +294,13 @@ if ($popular_tours_res) {
                                     <span><i class="bi bi-info-circle"></i> Live Train Status</span>
                                 </div>
                                 <div class="modern-search-bar p-2 d-flex flex-wrap align-items-center">
-                                    <div class="search-input-group border-end flex-grow-1 px-3 py-2">
+                                    <div class="search-input-group border-end px-3 py-2" style="flex: 1; min-width: 180px;">
+                                        <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-search text-info me-1"></i>Train Number</label>
+                                        <input type="text" name="train_no" placeholder="e.g. 12051" class="border-0 w-100 fw-bold" style="background: none;">
+                                    </div>
+                                    <div class="search-input-group border-end flex-grow-1 px-3 py-2" style="min-width: 150px;">
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-train-front-fill text-info me-1"></i>From Station</label>
-                                        <select name="train_from" id="trainFrom" class="border-0 w-100 fw-bold" style="background: none;" required>
+                                        <select name="train_from" id="trainFrom" class="border-0 w-100 fw-bold" style="background: none;">
                                             <option value="">Select Station</option>
                                             <option value="NDLS">New Delhi (NDLS)</option>
                                             <option value="BCT">Mumbai Central (BCT)</option>
@@ -328,9 +332,9 @@ if ($popular_tours_res) {
                                         </button>
                                     </div>
 
-                                    <div class="search-input-group border-end flex-grow-1 px-3 py-2">
+                                    <div class="search-input-group border-end flex-grow-1 px-3 py-2" style="min-width: 150px;">
                                         <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-geo-alt-fill text-info me-1"></i>To Station</label>
-                                        <select name="train_to" id="trainTo" class="border-0 w-100 fw-bold" style="background: none;" required>
+                                        <select name="train_to" id="trainTo" class="border-0 w-100 fw-bold" style="background: none;">
                                             <option value="">Select Station</option>
                                             <option value="NDLS">New Delhi (NDLS)</option>
                                             <option value="BCT">Mumbai Central (BCT)</option>

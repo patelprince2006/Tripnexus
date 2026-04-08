@@ -59,7 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 } else {
     // If not POST request, redirect to verification page
-    header("Location: verify_email.html");
+    header("Location: verify_email_ui.php");
     exit();
 }
 

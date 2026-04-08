@@ -61,10 +61,10 @@ if ($emailSent) {
         'A new verification code has been sent to ' . $email);
 
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        echo "<script>alert('Verification code sent! Check your email.'); window.location='verify_email.html';</script>";
+        echo "<script>alert('Verification code sent! Check your email.'); window.location='verify_email_ui.php?email=" . urlencode($email) . "';</script>";
     } else {
         // If accessed directly from session
-        echo "<script>alert('Verification code resent! Check your email.'); window.location='verify_email.html';</script>";
+        echo "<script>alert('Verification code resent! Check your email.'); window.location='verify_email_ui.php?email=" . urlencode($email) . "';</script>";
     }
 } else {
     echo "<script>alert('Failed to send email. Please try again.'); history.back();</script>";

@@ -11,12 +11,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $booking_id = $_POST['booking_id'];
     $user_id = $_SESSION['user_id'];
     $amount = $_POST['amount'];
-    $transaction_id = 'TNX' . time() . rand(10, 99); // Generate mock ID
+    
+    // Check if Razorpay payment ID is provided, otherwise fallback to mock ID
+    if (isset($_POST['razorpay_payment_id'])) {
+        $transaction_id = $_POST['razorpay_payment_id'];
+        $payment_method = 'razorpay';
+    } else {
+        $transaction_id = 'TNX' . time() . rand(10, 99); // Generate mock ID
+        $payment_method = 'card_mock';
+    }
 
     // 1. Insert into payments table
-    $pay_query = "INSERT INTO payments (booking_id, user_id, amount, transaction_id, payment_status) 
-                  VALUES (?, ?, ?, ?, 'success')";
-    db_query($conn, $pay_query, array($booking_id, $user_id, $amount, $transaction_id));
+    $pay_query = "INSERT INTO payments (booking_id, user_id, amount, transaction_id, payment_method, payment_status) 
+                  VALUES (?, ?, ?, ?, ?, 'success')";
+    db_query($conn, $pay_query, array($booking_id, $user_id, $amount, $transaction_id, $payment_method));
 
     // 2. Update booking status to 'confirmed'
     $update_query = "UPDATE bookings SET status = 'confirmed' WHERE id = ?";

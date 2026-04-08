@@ -1,41 +1,78 @@
 <?php
 session_start();
 include '../database/db.php';
+require_once '../database/razorpay_config.php';
 
-if (isset($_GET['autocomplete'])) {
-    // --- RailRadar Autocomplete Integration (Keyless) ---
-    $query = urlencode($_GET['autocomplete']);
-    $url = "https://api.railradar.org/api/v1/search/trains?query=$query";
+if (isset($_GET['live_status'])) {
+    $train_no = $_GET['live_status'];
+    $journey_date = $_GET['date'] ?? date('Ymd');
+    
+    // Use RapidAPI Indian Railway IRCTC API for Live Status
+    $url = "https://indian-railway-irctc.p.rapidapi.com/api/trains/v1/train/status?train_number=$train_no&departure_date=$journey_date&isH5=true&client=web";
     
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "GET",
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_HTTPHEADER => [
+            "x-rapidapi-host: " . RAPIDAPI_HOST,
+            "x-rapidapi-key: " . RAPIDAPI_KEY,
+            "x-rapid-api: " . RAPIDAPI_DB_HEADER
+        ],
+    ]);
+    
     $response = curl_exec($ch);
+    $err = curl_error($ch);
     curl_close($ch);
     
-    $data = json_decode($response, true);
-    $formatted_data = ['Station' => []];
-    
-    if (isset($data['data']) && is_array($data['data'])) {
-        foreach ($data['data'] as $t) {
-            $formatted_data['Station'][] = [
-                'StationName' => $t['name'] ?? 'Unknown',
-                'StationCode' => $t['number'] ?? 'N/A'
-            ];
-        }
-    }
-    
     header('Content-Type: application/json');
-    echo json_encode($formatted_data);
+    if ($err) {
+        echo json_encode(["status" => "error", "message" => "Connection Error: $err"]);
+    } else {
+        echo $response;
+    }
     exit;
 }
 
 if (isset($_GET['schedule'])) {
-    // Note: Schedule API still requires a source if using IndianRailAPI.
-    // Since we are removing IndianRailAPI, we will provide a "Schedule Coming Soon" message or similar.
+    $train_no = $_GET['schedule'];
+    
+    // Use RapidAPI Indian Railway IRCTC API for Train Search/Info
+    $url = "https://indian-railway-irctc.p.rapidapi.com/api/trains-search/v1/train/$train_no?isH5=true&client=web";
+    
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "GET",
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_HTTPHEADER => [
+            "x-rapidapi-host: " . RAPIDAPI_HOST,
+            "x-rapidapi-key: " . RAPIDAPI_KEY,
+            "x-rapid-api: " . RAPIDAPI_DB_HEADER
+        ],
+    ]);
+    
+    $response = curl_exec($ch);
+    $err = curl_error($ch);
+    curl_close($ch);
+    
     header('Content-Type: application/json');
-    echo json_encode(['Schedule' => []]);
+    if ($err) {
+        echo json_encode(["status" => "error", "message" => "Connection Error: $err"]);
+    } else {
+        echo $response;
+    }
     exit;
 }
 
@@ -70,140 +107,97 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $from = $_POST['train_from'] ?? '';
     $to = $_POST['train_to'] ?? '';
     $date = $_POST['train_date'] ?? date('Y-m-d');
+    $train_no = $_POST['train_no'] ?? '';
 
-    // --- IRCTC Insight API Integration (RapidAPI) ---
-    $rapid_api_key = "c549c4393c35299ce51ce61fbf77dd1917e9614c698f6761cbfd54a5748bb2ef";
-    $irctc_url = "https://irctc-insight.p.rapidapi.com/api/v1/train-details?from=$from&to=$to&date=" . date('Y-m-d', strtotime($date));
-    
-    $ch_irctc = curl_init();
-    curl_setopt_array($ch_irctc, [
-        CURLOPT_URL => $irctc_url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_ENCODING => "",
-        CURLOPT_MAXREDIRS => 10,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-        CURLOPT_CUSTOMREQUEST => "GET",
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_HTTPHEADER => [
-            "x-rapidapi-host: irctc-insight.p.rapidapi.com",
-            "x-rapidapi-key: $rapid_api_key"
-        ],
-    ]);
-    
-    $irctc_response = curl_exec($ch_irctc);
-    $irctc_err = curl_error($ch_irctc);
-    curl_close($ch_irctc);
-    
-    if (!$irctc_err) {
-        $irctc_data = json_decode($irctc_response, true);
-        if (isset($irctc_data['data']) && is_array($irctc_data['data'])) {
-            foreach ($irctc_data['data'] as $t) {
-                $t_num = $t['trainNumber'] ?? ($t['number'] ?? '');
-                $t_name = $t['trainName'] ?? ($t['name'] ?? '');
-                
-                if (empty($t_num)) continue;
+    // --- Search by Train Number (Using the new API as requested) ---
+    if (!empty($train_no)) {
+        $url = "https://indian-railway-irctc.p.rapidapi.com/api/trains-search/v1/train/$train_no?isH5=true&client=web";
+        
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_HTTPHEADER => [
+                "x-rapidapi-host: " . RAPIDAPI_HOST,
+                "x-rapidapi-key: " . RAPIDAPI_KEY,
+                "x-rapid-api: " . RAPIDAPI_DB_HEADER
+            ],
+        ]);
+        
+        $response = curl_exec($ch);
+        $err = curl_error($ch);
+        curl_close($ch);
+        
+        if (!$err) {
+            $api_data = json_decode($response, true);
+            if (isset($api_data['data']) && is_array($api_data['data'])) {
+                $t = $api_data['data'][0] ?? null;
+                if ($t) {
+                    $t_num = $t['train_number'] ?? $train_no;
+                    $t_name = $t['train_name'] ?? 'Unknown Train';
+                    $src = $t['from_station_code'] ?? 'Unknown';
+                    $dest = $t['to_station_code'] ?? 'Unknown';
+                    
+                    $dep_time = $date . ' ' . ($t['departure_time'] ?? '10:00') . ':00';
+                    $arr_time = date('Y-m-d H:i:s', strtotime($dep_time . ' + ' . ($t['duration'] ?? '8') . ' hours'));
 
-                $dep_time = $date . ' ' . ($t['departureTime'] ?? '10:00') . ':00';
-                $arr_time = $date . ' ' . ($t['arrivalTime'] ?? '18:00') . ':00';
-                if (strtotime($arr_time) < strtotime($dep_time)) {
-                    $arr_time = date('Y-m-d H:i:s', strtotime($arr_time . ' +1 day'));
+                    $train_check = db_query($conn, "SELECT train_id FROM trains WHERE train_number = ? AND departure_time = ?", [$t_num, $dep_time]);
+                    $train_row = db_fetch_assoc($train_check);
+                    
+                    if (!$train_row) {
+                        $price = rand(450, 3200);
+                        db_query($conn, "INSERT INTO trains (train_name, train_number, from_station, to_station, departure_time, arrival_time, price, available_seats) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
+                            [$t_name, $t_num, $src, $dest, $dep_time, $arr_time, $price, rand(15, 120)]);
+                        $train_id = mysqli_insert_id($conn);
+                    } else {
+                        $train_id = $train_row['train_id'];
+                        db_query($conn, "UPDATE trains SET train_name = ?, from_station = ?, to_station = ?, arrival_time = ? WHERE train_id = ?", 
+                            [$t_name, $src, $dest, $arr_time, $train_id]);
+                    }
+
+                    $final_res = db_query($conn, "SELECT * FROM trains WHERE train_id = ?", [$train_id]);
+                    if ($row = db_fetch_assoc($final_res)) {
+                        $results[] = $row;
+                    }
                 }
+            }
+        }
+    }
 
-                $train_check = db_query($conn, "SELECT train_id FROM trains WHERE train_number = ? AND departure_time = ?", [$t_num, $dep_time]);
-                $train_row = db_fetch_assoc($train_check);
-                
-                if (!$train_row) {
-                    $price = rand(450, 3200);
-                    db_query($conn, "INSERT INTO trains (train_name, train_number, from_station, to_station, departure_time, arrival_time, price, available_seats) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-                        [$t_name, $t_num, $from, $to, $dep_time, $arr_time, $price, rand(15, 120)]);
-                    $train_id = mysqli_insert_id($conn);
-                } else {
-                    $train_id = $train_row['train_id'];
+    // --- Primary Local Search ---
+    if (empty($results)) {
+        $from_details = db_fetch_assoc(db_query($conn, "SELECT city, station_name FROM train_stations WHERE station_code = ?", [$from]));
+        $to_details = db_fetch_assoc(db_query($conn, "SELECT city, station_name FROM train_stations WHERE station_code = ?", [$to]));
+        
+        $from_name = $from_details ? $from_details['city'] : $from;
+        $from_st_name = $from_details ? $from_details['station_name'] : $from;
+        $to_name = $to_details ? $to_details['city'] : $to;
+        $to_st_name = $to_details ? $to_details['station_name'] : $to;
+
+        $local_query = "SELECT * FROM trains 
+                        WHERE (from_station LIKE ? OR from_station LIKE ? OR from_station LIKE ?) 
+                        AND (to_station LIKE ? OR to_station LIKE ? OR to_station LIKE ?)
+                        ORDER BY departure_time ASC";
+        $local_res = db_query($conn, $local_query, array("%$from_name%", "%$from%", "%$from_st_name%", "%$to_name%", "%$to%", "%$to_st_name%"));
+
+        if ($local_res) {
+            while ($row = db_fetch_assoc($local_res)) {
+                $exists = false;
+                foreach ($results as $r) {
+                    if ($r['train_number'] == $row['train_number'] && $r['departure_time'] == $row['departure_time']) {
+                        $exists = true;
+                        break;
+                    }
                 }
-
-                $final_res = db_query($conn, "SELECT * FROM trains WHERE train_id = ?", [$train_id]);
-                if ($row = db_fetch_assoc($final_res)) {
+                if (!$exists) {
                     $results[] = $row;
                 }
-            }
-        }
-    }
-
-    // --- RailRadar API Integration (Keyless URL Search) ---
-    // Using the public search endpoint as requested
-    $railradar_url = "https://api.railradar.org/api/v1/search/trains?query=" . urlencode($from);
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $railradar_url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false); 
-    $response = curl_exec($ch);
-    curl_close($ch);
-
-    $api_data = json_decode($response, true);
-
-    // Process API data if available
-    if (isset($api_data['data']) && is_array($api_data['data'])) {
-        foreach ($api_data['data'] as $t) {
-            $t_num = $t['train_number'] ?? ($t['number'] ?? '');
-            $t_name = $t['train_name'] ?? ($t['name'] ?? '');
-            
-            if (empty($t_num)) continue;
-
-            $dep_time = $date . ' ' . str_pad(rand(0, 23), 2, '0', STR_PAD_LEFT) . ':' . str_pad(rand(0, 59), 2, '0', STR_PAD_LEFT) . ':00';
-            $arr_time = date('Y-m-d H:i:s', strtotime($dep_time . ' +' . rand(2, 24) . ' hours'));
-
-            // Sync with local database to allow booking
-            $train_check = db_query($conn, "SELECT train_id FROM trains WHERE train_number = ? AND departure_time = ?", [$t_num, $dep_time]);
-            $train_row = db_fetch_assoc($train_check);
-            
-            if (!$train_row) {
-                $price = rand(450, 3200);
-                db_query($conn, "INSERT INTO trains (train_name, train_number, from_station, to_station, departure_time, arrival_time, price, available_seats) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-                    [$t_name, $t_num, $from, $to, $dep_time, $arr_time, $price, rand(15, 120)]);
-                $train_id = mysqli_insert_id($conn);
-            } else {
-                $train_id = $train_row['train_id'];
-            }
-
-            $final_res = db_query($conn, "SELECT * FROM trains WHERE train_id = ?", [$train_id]);
-            if ($row = db_fetch_assoc($final_res)) {
-                $results[] = $row;
-            }
-        }
-    }
-
-    // --- Primary Local Search (Always runs as fallback or primary) ---
-    // Fetch station details from train_stations table to improve search accuracy
-    $from_details = db_fetch_assoc(db_query($conn, "SELECT city, station_name FROM train_stations WHERE station_code = ?", [$from]));
-    $to_details = db_fetch_assoc(db_query($conn, "SELECT city, station_name FROM train_stations WHERE station_code = ?", [$to]));
-    
-    $from_name = $from_details ? $from_details['city'] : $from;
-    $from_st_name = $from_details ? $from_details['station_name'] : $from;
-    $to_name = $to_details ? $to_details['city'] : $to;
-    $to_st_name = $to_details ? $to_details['station_name'] : $to;
-
-    $local_query = "SELECT * FROM trains 
-                    WHERE (from_station LIKE ? OR from_station LIKE ? OR from_station LIKE ?) 
-                    AND (to_station LIKE ? OR to_station LIKE ? OR to_station LIKE ?)
-                    ORDER BY departure_time ASC";
-    $local_res = db_query($conn, $local_query, array("%$from_name%", "%$from%", "%$from_st_name%", "%$to_name%", "%$to%", "%$to_st_name%"));
-
-    if ($local_res) {
-        while ($row = db_fetch_assoc($local_res)) {
-            // Avoid duplicates if API already added it
-            $exists = false;
-            foreach ($results as $r) {
-                if ($r['train_number'] == $row['train_number'] && $r['departure_time'] == $row['departure_time']) {
-                    $exists = true;
-                    break;
-                }
-            }
-            if (!$exists) {
-                $results[] = $row;
             }
         }
     }
@@ -214,7 +208,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     $search_performed = true;
 
-    // Apply Sorting
     if (!empty($results) && !empty($sort_price)) {
         usort($results, function($a, $b) use ($sort_price) {
             if ($sort_price === 'low_to_high') {
@@ -226,12 +219,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         });
     }
 } else {
-    // Recommendation System: Show personalized or popular trains
     $is_personalized = false;
-
     if (isset($_SESSION['user_id'])) {
         $uid = $_SESSION['user_id'];
-        // 1. Get stations from recent bookings
         $history_res = db_query($conn, "SELECT DISTINCT from_station, to_station FROM bookings b 
                                        JOIN trains t ON b.reference_id = t.train_id 
                                        WHERE b.user_id = ? AND b.booking_type = 'train' 
@@ -242,7 +232,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $pref_stations[] = $h['to_station'];
         }
 
-        // 2. Get stations from wishlist
         $wish_res = db_query($conn, "SELECT DISTINCT from_station, to_station FROM wishlist w 
                                     JOIN trains t ON w.item_id = t.train_id 
                                     WHERE w.user_id = ? AND w.item_type = 'train' LIMIT 5", [$uid]);
@@ -270,7 +259,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     if (empty($results)) {
-        // Fallback: Show most booked or upcoming trains
         $popular_query = "SELECT * FROM trains 
                          WHERE departure_time >= NOW()
                          ORDER BY price ASC, departure_time ASC 
@@ -284,6 +272,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -384,48 +374,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <span><i class="bi bi-info-circle"></i> PNR Status</span>
                         <span><i class="bi bi-info-circle"></i> Live Train Status</span>
                     </div>
-                    <div class="d-flex align-items-center bg-white rounded-pill shadow-sm p-2">
-                        <div class="search-input-group border-end flex-grow-1 px-3 py-2">
-                            <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-train-front-fill text-info me-1"></i>From Station</label>
-                            <select name="train_from" id="trainFrom" class="border-0 w-100 fw-bold" style="background: none;" required>
-                                <option value="">Select Station</option>
+                    <div class="modern-search-bar p-2 d-flex flex-wrap align-items-center">
+                        <div class="search-input-group border-end px-3 py-2" style="flex: 1; min-width: 200px;">
+                            <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-search text-info me-1"></i>Train Number</label>
+                            <input type="text" name="train_no" placeholder="e.g. 12051" class="border-0 w-100 fw-bold" style="background: none;">
+                        </div>
+                        <div class="search-input-group border-end px-3 py-2" style="flex: 1; min-width: 150px;">
+                            <label class="d-block small text-uppercase fw-bold text-muted mb-1">From Station</label>
+                            <select name="train_from" id="trainFrom" class="border-0 w-100 fw-bold" style="background: none;">
+                                <option value="">Source</option>
                                 <?php foreach ($stations as $st): ?>
-                                    <option value="<?php echo htmlspecialchars($st['station_code']); ?>" <?php echo ($from == $st['station_code']) ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($st['city']) . " (" . htmlspecialchars($st['station_code']) . ")"; ?>
+                                    <option value="<?php echo $st['station_code']; ?>" <?php echo ($from === $st['station_code']) ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($st['city']); ?> (<?php echo $st['station_code']; ?>)
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="search-swap-btn">
-                            <button type="button" class="btn btn-light rounded-circle shadow-sm border" onclick="swapTrainLocations()">
-                                <i class="bi bi-arrow-left-right text-info"></i>
-                            </button>
-                        </div>
-                        <div class="search-input-group border-end flex-grow-1 px-3 py-2">
-                            <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-geo-alt-fill text-info me-1"></i>To Station</label>
-                            <select name="train_to" id="trainTo" class="border-0 w-100 fw-bold" style="background: none;" required>
-                                <option value="">Select Station</option>
+                        <div class="search-input-group border-end px-3 py-2" style="flex: 1; min-width: 150px;">
+                            <label class="d-block small text-uppercase fw-bold text-muted mb-1">To Station</label>
+                            <select name="train_to" id="trainTo" class="border-0 w-100 fw-bold" style="background: none;">
+                                <option value="">Destination</option>
                                 <?php foreach ($stations as $st): ?>
-                                    <option value="<?php echo htmlspecialchars($st['station_code']); ?>" <?php echo ($to == $st['station_code']) ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($st['city']) . " (" . htmlspecialchars($st['station_code']) . ")"; ?>
+                                    <option value="<?php echo $st['station_code']; ?>" <?php echo ($to === $st['station_code']) ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($st['city']); ?> (<?php echo $st['station_code']; ?>)
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="search-input-group border-end px-3 py-2" style="min-width: 150px;">
-                            <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-calendar-event text-info me-1"></i>Journey Date</label>
-                            <input type="date" name="train_date" class="border-0 w-100 fw-bold" value="<?php echo htmlspecialchars($date); ?>" min="<?php echo date('Y-m-d'); ?>" required>
-                        </div>
-                        <div class="search-input-group px-3 py-2" style="min-width: 150px;">
-                            <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-filter text-info me-1"></i>Price Sort</label>
-                            <select name="sort_price" class="border-0 w-100 fw-bold" style="background: none;" onchange="this.form.submit()">
-                                <option value="">Default</option>
-                                <option value="low_to_high" <?php echo ($sort_price === 'low_to_high') ? 'selected' : ''; ?>>Low to High</option>
-                                <option value="high_to_low" <?php echo ($sort_price === 'high_to_low') ? 'selected' : ''; ?>>High to Low</option>
-                            </select>
+                            <label class="d-block small text-uppercase fw-bold text-muted mb-1">Date</label>
+                            <input type="date" name="train_date" class="border-0 w-100 fw-bold" style="background: none;" value="<?php echo htmlspecialchars($date); ?>">
                         </div>
                         <button type="submit" class="btn btn-info btn-search rounded-pill px-4 py-3 ms-2 fw-bold text-white shadow-lg">
-                            Search Trains
+                            Search
                         </button>
                     </div>
                 </form>
@@ -461,9 +442,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="col-md-3">
                                 <h5 class="fw-bold mb-1 text-dark"><?php echo htmlspecialchars($train['train_name']); ?></h5>
                                 <span class="badge bg-light text-dark border"><?php echo htmlspecialchars($train['train_number']); ?></span>
-                                <div class="mt-2">
+                                <div class="mt-2 d-flex gap-2">
                                     <button class="btn btn-link btn-sm p-0 text-info text-decoration-none" onclick="viewSchedule('<?php echo $train['train_number']; ?>', '<?php echo htmlspecialchars($train['train_name'], ENT_QUOTES); ?>')">
                                         <i class="bi bi-calendar3 me-1"></i>View Schedule
+                                    </button>
+                                    <button class="btn btn-link btn-sm p-0 text-success text-decoration-none" onclick="checkLiveStatus('<?php echo $train['train_number']; ?>', '<?php echo htmlspecialchars($train['train_name'], ENT_QUOTES); ?>', '<?php echo date('Ymd', $dep_ts); ?>')">
+                                        <i class="bi bi-geo-alt-fill me-1"></i>Live Status
                                     </button>
                                 </div>
                             </div>
@@ -564,7 +548,87 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
     </div>
 
+    <!-- Live Status Modal -->
+    <div class="modal fade" id="liveStatusModal" tabindex="-1" aria-labelledby="liveStatusModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-success text-white border-0 py-3">
+                    <h5 class="modal-title fw-bold" id="liveStatusModalLabel"><i class="bi bi-geo-alt-fill me-2"></i>Live Train Status</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="liveStatusLoading" class="text-center py-4">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Fetching live location...</p>
+                    </div>
+                    <div id="liveStatusContent" style="display: none;">
+                        <div class="card bg-light border-0 rounded-3 mb-3">
+                            <div class="card-body">
+                                <h6 class="text-muted small text-uppercase fw-bold mb-2">Current Position</h6>
+                                <h5 id="currentStation" class="fw-bold text-success mb-1">Station Name</h5>
+                                <p id="statusMessage" class="mb-0 small">On time / Delayed by ...</p>
+                            </div>
+                        </div>
+                        <div class="row text-center">
+                            <div class="col-6 border-end">
+                                <div class="text-muted small">Last Station</div>
+                                <div id="lastStation" class="fw-bold">Station A</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted small">Next Station</div>
+                                <div id="nextStation" class="fw-bold">Station B</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="liveStatusError" class="text-center py-4 text-danger" style="display: none;">
+                        <i class="bi bi-exclamation-circle-fill display-5"></i>
+                        <p class="mt-2" id="liveStatusErrorMessage">Live status currently unavailable for this train.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function checkLiveStatus(trainNumber, trainName, date) {
+            const modal = new bootstrap.Modal(document.getElementById('liveStatusModal'));
+            document.getElementById('liveStatusModalLabel').textContent = `${trainName} (${trainNumber}) - Live Status`;
+            
+            document.getElementById('liveStatusLoading').style.display = 'block';
+            document.getElementById('liveStatusContent').style.display = 'none';
+            document.getElementById('liveStatusError').style.display = 'none';
+            
+            modal.show();
+
+            fetch(`search_train.php?live_status=${trainNumber}&date=${date}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('liveStatusLoading').style.display = 'none';
+                    
+                    // The new API response handling
+                    if (data && data.data) {
+                        const status = data.data;
+                        document.getElementById('currentStation').textContent = status.current_station_name || status.current_station || "In Transit";
+                        document.getElementById('statusMessage').textContent = status.status_as_of || status.message || "Live data retrieved.";
+                        document.getElementById('lastStation').textContent = status.last_station_name || "N/A";
+                        document.getElementById('nextStation').textContent = status.next_station_name || "N/A";
+                        document.getElementById('liveStatusContent').style.display = 'block';
+                    } else if (data.message) {
+                        document.getElementById('liveStatusErrorMessage').textContent = data.message;
+                        document.getElementById('liveStatusError').style.display = 'block';
+                    } else {
+                        document.getElementById('liveStatusError').style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching live status:', err);
+                    document.getElementById('liveStatusLoading').style.display = 'none';
+                    document.getElementById('liveStatusError').style.display = 'block';
+                });
+        }
+
         function viewSchedule(trainNumber, trainName) {
             const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
             document.getElementById('scheduleModalLabel').textContent = `${trainName} (${trainNumber}) - Schedule`;
@@ -579,20 +643,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('scheduleLoading').style.display = 'none';
-                    if (data.Schedule && data.Schedule.length > 0) {
+                    
+                    // The new API response handling for schedule
+                    const schedule = (data && data.data && data.data.schedule) ? data.data.schedule : null;
+                    
+                    if (schedule && schedule.length > 0) {
                         const tableBody = document.getElementById('scheduleTableBody');
                         tableBody.innerHTML = '';
-                        data.Schedule.forEach(stop => {
+                        schedule.forEach(stop => {
                             const row = `
                                 <tr>
                                     <td class="ps-4 fw-bold">
-                                        <div class="text-dark">${stop.StationName}</div>
-                                        <div class="small text-muted">${stop.StationCode}</div>
+                                        <div class="text-dark">${stop.station_name}</div>
+                                        <div class="small text-muted">${stop.station_code}</div>
                                     </td>
-                                    <td>${stop.ArrivalTime === '00:00' ? 'Starts' : stop.ArrivalTime}</td>
-                                    <td>${stop.DepartureTime === '00:00' ? 'Ends' : stop.DepartureTime}</td>
-                                    <td>${stop.Distance} km</td>
-                                    <td class="pe-4">Day ${stop.Day}</td>
+                                    <td>${stop.arrival_time || 'Starts'}</td>
+                                    <td>${stop.departure_time || 'Ends'}</td>
+                                    <td>${stop.distance || '0'} km</td>
+                                    <td class="pe-4">Day ${stop.day || '1'}</td>
                                 </tr>
                             `;
                             tableBody.insertAdjacentHTML('beforeend', row);
@@ -622,3 +690,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <script src="../public/script.js"></script>
 </body>
 </html>
+

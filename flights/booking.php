@@ -40,6 +40,6 @@ if (!$res) {
 
 $booking_id = mysqli_insert_id($conn);
 
-echo "<script>alert('Now booking is pending.'); window.location='checkout.php?booking_id={$booking_id}';</script>";
+header("Location: checkout.php?booking_id={$booking_id}");
 exit;
 ?>

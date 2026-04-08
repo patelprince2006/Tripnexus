@@ -55,8 +55,8 @@ SGP-vijay_new/
 ├── register.php                        (MODIFIED - Email Verification)
 ├── register.html                       (Unchanged)
 ├── login.php                           (MODIFIED - Check Email Verified)
-├── verify_email.html                   (NEW - Verification Code Input)
-├── verify_email.php                    (NEW - Verification Handler)
+├── verify_email_ui.php                 (NEW - Verification Code Input UI)
+├── verify_email.php                    (MODIFIED - Verification Logic)Handler)
 ├── resend_verification.php             (NEW - Resend Code Handler)
 ├── reset_password_handler.php          (MODIFIED - Send Email)
 ├── update_password.php                 (MODIFIED - Send Confirmation)
@@ -76,8 +76,8 @@ User Enters Code → Email Verified → User Can Login
 **Files Involved:**
 - `register.html` (form)
 - `register.php` (generates code, sends email)
-- `verify_email.html` (code input form)
-- `verify_email.php` (validates code)
+- `verify_email_ui.php` (code input form UI)
+- `verify_email.php` (validates code logic)
 - `resend_verification.php` (resend code)
 
 ---
