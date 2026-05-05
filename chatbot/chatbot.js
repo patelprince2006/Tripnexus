@@ -329,6 +329,13 @@ How can I assist you today?
                     { text: '🗺️ Tours', action: 'tours' }
                 ]
             },
+            goodbye: {
+                message: '👋 **Goodbye!**\n\nThank you for chatting with TripNexus! Have a wonderful journey and safe travels!\n\nWe hope to see you again soon for all your travel needs. ✈️🏨🗺️',
+                quickReplies: [
+                    { text: '🏠 Home', action: 'home' },
+                    { text: '❓ Help', action: 'help' }
+                ]
+            },
             default: {
                 message: '🤔 **Got It!**\n\nI understand you\'re looking for travel information! Let me help you explore our services.\n\nYou can ask me about:\n• ✈️ Flights - Book air tickets\n• 🏨 Hotels - Find accommodation\n• 🚌 Buses - Travel by road\n• 🚂 Trains - Rail bookings\n• 🗺️ Tours - Holiday packages\n\nWhat interests you most?',
                 quickReplies: [
@@ -402,6 +409,10 @@ How can I assist you today?
 
         if (this.containsAny(lowerText, ['pay', 'payment', 'payments', 'card', 'cards', 'upi', 'netbanking', 'wallet'])) {
             return responses.payment;
+        }
+
+        if (this.containsAny(lowerText, ['bye', 'goodbye', 'see you', 'farewell', 'exit', 'quit'])) {
+            return responses.goodbye;
         }
 
         return responses.default;
