@@ -1,5 +1,5 @@
 <?php
-include '../database/db.php';
+require_once __DIR__ . '/../database/db.php';
 include 'auth_check.php';
 
 if (!isset($_GET['tour_id'])) {

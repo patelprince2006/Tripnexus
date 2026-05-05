@@ -1,7 +1,7 @@
 <?php
 session_start();
-include '../database/db.php';
-require_once '../database/razorpay_config.php';
+require_once __DIR__ . '/../database/db.php';
+require_once __DIR__ . '/../database/razorpay_config.php';
 
 if (isset($_GET['live_status'])) {
     $train_no = $_GET['live_status'];

@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../database/db.php';
+require_once __DIR__ . '/../database/db.php';
 
 // Load user's wishlist for flights
 $user_wishlist = [];

@@ -24,6 +24,13 @@ echo "<!DOCTYPE html>
 include 'db.php';
 
 // Check if notifications table exists
+// Establish database connection using PDO
+try {
+    $conn = new PDO('mysql:host=localhost;dbname=your_database;charset=utf8', 'your_username', 'your_password');
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("<p class='error'>✗ Database connection failed: " . htmlspecialchars($e->getMessage()) . "</p>");
+}
 $tableCheck = db_query($conn, "SHOW TABLES LIKE 'notifications'");
 
 if (db_num_rows($tableCheck) > 0) {

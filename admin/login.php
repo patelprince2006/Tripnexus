@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../database/db.php';
+require_once __DIR__ . '/../database/db.php';
 
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
     header("Location: dashboard.php");

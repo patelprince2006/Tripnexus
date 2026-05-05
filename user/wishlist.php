@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../database/db.php';
+require_once __DIR__ . '/../database/db.php';
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {

@@ -1,5 +1,5 @@
 <?php
-include '../database/db.php';
+require_once __DIR__ . '/../database/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['hotel_id'], $_POST['lat'], $_POST['lng'])) {
     $hotel_id = intval($_POST['hotel_id']);

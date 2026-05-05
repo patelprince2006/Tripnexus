@@ -1,6 +1,137 @@
 <?php
 session_start();
-include '../database/db.php';
+require_once __DIR__ . '/../database/db.php';
+
+// Approximate coordinates for common Indian cities
+$cityCoords = [
+    'Mumbai' => ['lat' => 19.0760, 'lng' => 72.8777],
+    'Delhi' => ['lat' => 28.6139, 'lng' => 77.2090],
+    'Bangalore' => ['lat' => 12.9716, 'lng' => 77.5946],
+    'Hyderabad' => ['lat' => 17.3850, 'lng' => 78.4867],
+    'Chennai' => ['lat' => 13.0827, 'lng' => 80.2707],
+    'Kolkata' => ['lat' => 22.5726, 'lng' => 88.3639],
+    'Pune' => ['lat' => 18.5204, 'lng' => 73.8567],
+    'Ahmedabad' => ['lat' => 23.0225, 'lng' => 72.5714],
+    'Jaipur' => ['lat' => 26.9124, 'lng' => 75.7873],
+    'Goa' => ['lat' => 15.2993, 'lng' => 74.1240],
+    'Agra' => ['lat' => 27.1767, 'lng' => 78.0081],
+    'Varanasi' => ['lat' => 25.3176, 'lng' => 83.0100],
+    'Udaipur' => ['lat' => 24.5854, 'lng' => 73.7125],
+    'Kerala' => ['lat' => 10.8505, 'lng' => 76.2711],
+    'Kochi' => ['lat' => 9.9312, 'lng' => 76.2673],
+    'Rajasthan' => ['lat' => 27.0238, 'lng' => 74.2179],
+    'Himachal Pradesh' => ['lat' => 31.1048, 'lng' => 77.1734],
+    'Shimla' => ['lat' => 31.1048, 'lng' => 77.1734],
+    'Manali' => ['lat' => 32.2396, 'lng' => 77.1887],
+    'Leh' => ['lat' => 34.1526, 'lng' => 77.5771],
+    'Srinagar' => ['lat' => 34.0837, 'lng' => 74.7973],
+    'Bengaluru' => ['lat' => 12.9716, 'lng' => 77.5946],
+    'Surat' => ['lat' => 21.1702, 'lng' => 72.8311],
+    'Lucknow' => ['lat' => 26.8467, 'lng' => 80.9462],
+    'Kanpur' => ['lat' => 26.4499, 'lng' => 80.3319],
+    'Nagpur' => ['lat' => 21.1458, 'lng' => 79.0882],
+    'Indore' => ['lat' => 22.7196, 'lng' => 75.8577],
+    'Thane' => ['lat' => 19.2183, 'lng' => 72.9781],
+    'Bhopal' => ['lat' => 23.2599, 'lng' => 77.4126],
+    'Visakhapatnam' => ['lat' => 17.6868, 'lng' => 83.2185],
+    'Patna' => ['lat' => 25.5941, 'lng' => 85.1376],
+    'Vadodara' => ['lat' => 22.3072, 'lng' => 73.1812],
+    'Ghaziabad' => ['lat' => 28.6692, 'lng' => 77.4538],
+    'Ludhiana' => ['lat' => 30.9010, 'lng' => 75.8573],
+    'Coimbatore' => ['lat' => 11.0168, 'lng' => 76.9558],
+    'Madurai' => ['lat' => 9.9252, 'lng' => 78.1198],
+    'Jabalpur' => ['lat' => 23.1815, 'lng' => 79.9864],
+    'Gwalior' => ['lat' => 26.2183, 'lng' => 78.1828],
+    'Vijayawada' => ['lat' => 16.5062, 'lng' => 80.6480],
+    'Rajkot' => ['lat' => 22.3039, 'lng' => 70.8022],
+    'Jamshedpur' => ['lat' => 22.8046, 'lng' => 86.2029],
+    'Mysore' => ['lat' => 12.2958, 'lng' => 76.6394],
+    'Nashik' => ['lat' => 19.9975, 'lng' => 73.7898],
+    'Faridabad' => ['lat' => 28.4089, 'lng' => 77.3178],
+    'Meerut' => ['lat' => 28.9845, 'lng' => 77.7064],
+    'Rajkot' => ['lat' => 22.3039, 'lng' => 70.8022],
+    'Kalyan' => ['lat' => 19.2502, 'lng' => 73.1602],
+    'Vasai' => ['lat' => 19.4053, 'lng' => 72.8418],
+    'Dhanbad' => ['lat' => 23.7957, 'lng' => 86.4304],
+    'Aurangabad' => ['lat' => 19.8762, 'lng' => 75.3433],
+    'Amritsar' => ['lat' => 31.6340, 'lng' => 74.8723],
+    'Allahabad' => ['lat' => 25.4358, 'lng' => 81.8463],
+    'Ranchi' => ['lat' => 23.3441, 'lng' => 85.3096],
+    'Howrah' => ['lat' => 22.5804, 'lng' => 88.3299],
+    'Guntur' => ['lat' => 16.3067, 'lng' => 80.4365],
+    'Jodhpur' => ['lat' => 26.2389, 'lng' => 73.0243],
+    'Raipur' => ['lat' => 21.2514, 'lng' => 81.6296],
+    'Kota' => ['lat' => 25.2138, 'lng' => 75.8648],
+    'Guwahati' => ['lat' => 26.2006, 'lng' => 91.7688],
+    'Chandigarh' => ['lat' => 30.7333, 'lng' => 76.7794],
+    'Solapur' => ['lat' => 17.6599, 'lng' => 75.9064],
+    'Hubli' => ['lat' => 15.3647, 'lng' => 75.1240],
+    'Dharwad' => ['lat' => 15.4589, 'lng' => 75.0078],
+    'Salem' => ['lat' => 11.6643, 'lng' => 78.1460],
+    'Aligarh' => ['lat' => 27.8974, 'lng' => 78.0880],
+    'Gurgaon' => ['lat' => 28.4595, 'lng' => 77.0266],
+    'Moradabad' => ['lat' => 28.8386, 'lng' => 78.7733],
+    'Bareilly' => ['lat' => 28.3670, 'lng' => 79.4304],
+    'Jalandhar' => ['lat' => 31.3260, 'lng' => 75.5762],
+    'Warangal' => ['lat' => 17.9689, 'lng' => 79.5941],
+    'Mangalore' => ['lat' => 12.9141, 'lng' => 74.8560],
+    'Tirupati' => ['lat' => 13.6288, 'lng' => 79.4192],
+    'Kurnool' => ['lat' => 15.8281, 'lng' => 78.0373],
+    'Nellore' => ['lat' => 14.4426, 'lng' => 79.9865],
+    'Belgaum' => ['lat' => 15.8497, 'lng' => 74.4977],
+    'Ambala' => ['lat' => 30.3782, 'lng' => 76.7767],
+    'Dehradun' => ['lat' => 30.3165, 'lng' => 78.0322],
+    'Ujjain' => ['lat' => 23.1793, 'lng' => 75.7849],
+    'Pondicherry' => ['lat' => 11.9139, 'lng' => 79.8145],
+    'Andaman' => ['lat' => 11.6670, 'lng' => 92.7359],
+    'Darjeeling' => ['lat' => 27.0462, 'lng' => 88.2687],
+    'Mussoorie' => ['lat' => 30.4591, 'lng' => 78.0663],
+    'Ooty' => ['lat' => 11.4064, 'lng' => 76.6932],
+    'Kodaikanal' => ['lat' => 10.2381, 'lng' => 77.4892],
+    'Munnar' => ['lat' => 10.0889, 'lng' => 77.0595],
+    'Rishikesh' => ['lat' => 30.0869, 'lng' => 78.2676],
+    'Haridwar' => ['lat' => 29.9457, 'lng' => 78.1642],
+    'Pushkar' => ['lat' => 26.4906, 'lng' => 74.5551],
+    'Mount Abu' => ['lat' => 24.5924, 'lng' => 72.7156],
+    'Khajuraho' => ['lat' => 24.8520, 'lng' => 79.9274],
+    'Hampi' => ['lat' => 15.3350, 'lng' => 76.4600],
+    'Badami' => ['lat' => 15.9129, 'lng' => 75.6800],
+    'Pattadakal' => ['lat' => 15.9547, 'lng' => 75.8160],
+    'Auroville' => ['lat' => 12.0061, 'lng' => 79.8112],
+    'Mahabalipuram' => ['lat' => 12.6189, 'lng' => 80.1939],
+    'Thanjavur' => ['lat' => 10.7867, 'lng' => 79.1378],
+    'Trichy' => ['lat' => 10.8505, 'lng' => 78.6997],
+    'Madurai' => ['lat' => 9.9252, 'lng' => 78.1198],
+    'Rameswaram' => ['lat' => 9.2876, 'lng' => 79.3129],
+    'Kanyakumari' => ['lat' => 8.0883, 'lng' => 77.5385],
+    'Port Blair' => ['lat' => 11.6670, 'lng' => 92.7359],
+];
+
+// Auto-populate coordinates for hotels that don't have them
+$res = db_query($conn, "SELECT hotel_id, name, city FROM hotels WHERE latitude IS NULL OR longitude IS NULL");
+while ($hotel = db_fetch_assoc($res)) {
+    $city = trim($hotel['city']);
+    $found = false;
+    
+    if (isset($cityCoords[$city])) {
+        $lat = $cityCoords[$city]['lat'];
+        $lng = $cityCoords[$city]['lng'];
+        $found = true;
+    } else {
+        foreach ($cityCoords as $cityName => $coords) {
+            if (stripos($city, $cityName) !== false || stripos($cityName, $city) !== false) {
+                $lat = $coords['lat'];
+                $lng = $coords['lng'];
+                $found = true;
+                break;
+            }
+        }
+    }
+    
+    if ($found) {
+        db_query($conn, "UPDATE hotels SET latitude = ?, longitude = ? WHERE hotel_id = ?", [$lat, $lng, $hotel['hotel_id']]);
+    }
+}
 
 // Load user's wishlist for hotels
 $user_wishlist = [];
@@ -185,6 +316,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../public/style.css">
+    <link rel="stylesheet" href="../chatbot/chatbot.css">
     <style>
         .hotel-card {
             transition: all 0.3s ease;
@@ -280,14 +412,109 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <div class="modern-search-bar p-2 d-flex flex-wrap align-items-center">
                         <div class="search-input-group border-end flex-grow-1 px-3 py-2">
                             <label class="d-block small text-uppercase fw-bold text-muted mb-1"><i class="bi bi-building-fill text-warning me-1"></i>City / Hotel</label>
-                            <select name="hotel_city" class="border-0 w-100 fw-bold" style="background: none;" required>
-                                <option value="">Select City</option>
+                            <input type="text" name="hotel_city" class="border-0 w-100 fw-bold" style="background: none;" placeholder="Type any city (e.g., Paris, London, Tokyo)" value="<?php echo htmlspecialchars($city); ?>" required list="citySuggestions">
+                            <datalist id="citySuggestions">
                                 <?php foreach ($cities as $c): ?>
-                                    <option value="<?php echo htmlspecialchars($c); ?>" <?php echo ($city === $c) ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($c); ?>
-                                    </option>
+                                    <option value="<?php echo htmlspecialchars($c); ?>">
                                 <?php endforeach; ?>
-                            </select>
+                                <option value="Surat">
+                                <option value="Lucknow">
+                                <option value="Kanpur">
+                                <option value="Nagpur">
+                                <option value="Indore">
+                                <option value="Thane">
+                                <option value="Bhopal">
+                                <option value="Visakhapatnam">
+                                <option value="Patna">
+                                <option value="Vadodara">
+                                <option value="Ghaziabad">
+                                <option value="Ludhiana">
+                                <option value="Coimbatore">
+                                <option value="Madurai">
+                                <option value="Jabalpur">
+                                <option value="Gwalior">
+                                <option value="Vijayawada">
+                                <option value="Rajkot">
+                                <option value="Jamshedpur">
+                                <option value="Mysore">
+                                <option value="Nashik">
+                                <option value="Faridabad">
+                                <option value="Meerut">
+                                <option value="Kalyan">
+                                <option value="Vasai">
+                                <option value="Dhanbad">
+                                <option value="Aurangabad">
+                                <option value="Amritsar">
+                                <option value="Allahabad">
+                                <option value="Ranchi">
+                                <option value="Howrah">
+                                <option value="Guntur">
+                                <option value="Jodhpur">
+                                <option value="Raipur">
+                                <option value="Kota">
+                                <option value="Guwahati">
+                                <option value="Chandigarh">
+                                <option value="Solapur">
+                                <option value="Hubli">
+                                <option value="Dharwad">
+                                <option value="Salem">
+                                <option value="Aligarh">
+                                <option value="Gurgaon">
+                                <option value="Moradabad">
+                                <option value="Bareilly">
+                                <option value="Jalandhar">
+                                <option value="Warangal">
+                                <option value="Mangalore">
+                                <option value="Tirupati">
+                                <option value="Kurnool">
+                                <option value="Nellore">
+                                <option value="Belgaum">
+                                <option value="Ambala">
+                                <option value="Dehradun">
+                                <option value="Ujjain">
+                                <option value="Pondicherry">
+                                <option value="Andaman">
+                                <option value="Darjeeling">
+                                <option value="Mussoorie">
+                                <option value="Ooty">
+                                <option value="Kodaikanal">
+                                <option value="Munnar">
+                                <option value="Rishikesh">
+                                <option value="Haridwar">
+                                <option value="Pushkar">
+                                <option value="Mount Abu">
+                                <option value="Khajuraho">
+                                <option value="Hampi">
+                                <option value="Badami">
+                                <option value="Pattadakal">
+                                <option value="Auroville">
+                                <option value="Mahabalipuram">
+                                <option value="Thanjavur">
+                                <option value="Trichy">
+                                <option value="Rameswaram">
+                                <option value="Kanyakumari">
+                                <option value="Port Blair">
+                                <option value="Paris">
+                                <option value="London">
+                                <option value="New York">
+                                <option value="Tokyo">
+                                <option value="Dubai">
+                                <option value="Singapore">
+                                <option value="Bangkok">
+                                <option value="Hong Kong">
+                                <option value="Sydney">
+                                <option value="Rome">
+                                <option value="Barcelona">
+                                <option value="Amsterdam">
+                                <option value="Berlin">
+                                <option value="Vienna">
+                                <option value="Prague">
+                                <option value="Istanbul">
+                                <option value="Cairo">
+                                <option value="Cape Town">
+                                <option value="Rio de Janeiro">
+                                <option value="Buenos Aires">
+                            </datalist>
                         </div>
                         <div class="search-input-group border-end px-3 py-2" style="min-width: 150px;">
                             <label class="d-block small text-uppercase fw-bold text-muted mb-1">Check-in</label>
@@ -403,6 +630,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <script src="https://maps.googleapis.com/maps/api/js?key=45e155bbbfe3b191f3b06f74cac0667e"></script>
     <script src="../flights/wishlist_toggle.js"></script>
     <script src="../public/script.js"></script>
+    <script src="../chatbot/chatbot.js"></script>
 
     <script>
         let mainMap;
@@ -473,6 +701,109 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             mainMap.fitBounds(bounds);
         }
 
+        // City coordinates fallback
+        const cityCoords = {
+            'Mumbai': { lat: 19.0760, lng: 72.8777 },
+            'Delhi': { lat: 28.6139, lng: 77.2090 },
+            'Bangalore': { lat: 12.9716, lng: 77.5946 },
+            'Hyderabad': { lat: 17.3850, lng: 78.4867 },
+            'Chennai': { lat: 13.0827, lng: 80.2707 },
+            'Kolkata': { lat: 22.5726, lng: 88.3639 },
+            'Pune': { lat: 18.5204, lng: 73.8567 },
+            'Ahmedabad': { lat: 23.0225, lng: 72.5714 },
+            'Jaipur': { lat: 26.9124, lng: 75.7873 },
+            'Goa': { lat: 15.2993, lng: 74.1240 },
+            'Agra': { lat: 27.1767, lng: 78.0081 },
+            'Varanasi': { lat: 25.3176, lng: 83.0100 },
+            'Udaipur': { lat: 24.5854, lng: 73.7125 },
+            'Kerala': { lat: 10.8505, lng: 76.2711 },
+            'Kochi': { lat: 9.9312, lng: 76.2673 },
+            'Rajasthan': { lat: 27.0238, lng: 74.2179 },
+            'Himachal Pradesh': { lat: 31.1048, lng: 77.1734 },
+            'Shimla': { lat: 31.1048, lng: 77.1734 },
+            'Manali': { lat: 32.2396, lng: 77.1887 },
+            'Leh': { lat: 34.1526, lng: 77.5771 },
+            'Srinagar': { lat: 34.0837, lng: 74.7973 },
+            'Bengaluru': { lat: 12.9716, lng: 77.5946 },
+            'Surat': { lat: 21.1702, lng: 72.8311 },
+            'Lucknow': { lat: 26.8467, lng: 80.9462 },
+            'Kanpur': { lat: 26.4499, lng: 80.3319 },
+            'Nagpur': { lat: 21.1458, lng: 79.0882 },
+            'Indore': { lat: 22.7196, lng: 75.8577 },
+            'Thane': { lat: 19.2183, lng: 72.9781 },
+            'Bhopal': { lat: 23.2599, lng: 77.4126 },
+            'Visakhapatnam': { lat: 17.6868, lng: 83.2185 },
+            'Patna': { lat: 25.5941, lng: 85.1376 },
+            'Vadodara': { lat: 22.3072, lng: 73.1812 },
+            'Ghaziabad': { lat: 28.6692, lng: 77.4538 },
+            'Ludhiana': { lat: 30.9010, lng: 75.8573 },
+            'Coimbatore': { lat: 11.0168, lng: 76.9558 },
+            'Madurai': { lat: 9.9252, lng: 78.1198 },
+            'Jabalpur': { lat: 23.1815, lng: 79.9864 },
+            'Gwalior': { lat: 26.2183, lng: 78.1828 },
+            'Vijayawada': { lat: 16.5062, lng: 80.6480 },
+            'Rajkot': { lat: 22.3039, lng: 70.8022 },
+            'Jamshedpur': { lat: 22.8046, lng: 86.2029 },
+            'Mysore': { lat: 12.2958, lng: 76.6394 },
+            'Nashik': { lat: 19.9975, lng: 73.7898 },
+            'Faridabad': { lat: 28.4089, lng: 77.3178 },
+            'Meerut': { lat: 28.9845, lng: 77.7064 },
+            'Kalyan': { lat: 19.2502, lng: 73.1602 },
+            'Vasai': { lat: 19.4053, lng: 72.8418 },
+            'Dhanbad': { lat: 23.7957, lng: 86.4304 },
+            'Aurangabad': { lat: 19.8762, lng: 75.3433 },
+            'Amritsar': { lat: 31.6340, lng: 74.8723 },
+            'Allahabad': { lat: 25.4358, lng: 81.8463 },
+            'Ranchi': { lat: 23.3441, lng: 85.3096 },
+            'Howrah': { lat: 22.5804, lng: 88.3299 },
+            'Guntur': { lat: 16.3067, lng: 80.4365 },
+            'Jodhpur': { lat: 26.2389, lng: 73.0243 },
+            'Raipur': { lat: 21.2514, lng: 81.6296 },
+            'Kota': { lat: 25.2138, lng: 75.8648 },
+            'Guwahati': { lat: 26.2006, lng: 91.7688 },
+            'Chandigarh': { lat: 30.7333, lng: 76.7794 },
+            'Solapur': { lat: 17.6599, lng: 75.9064 },
+            'Hubli': { lat: 15.3647, lng: 75.1240 },
+            'Dharwad': { lat: 15.4589, lng: 75.0078 },
+            'Salem': { lat: 11.6643, lng: 78.1460 },
+            'Aligarh': { lat: 27.8974, lng: 78.0880 },
+            'Gurgaon': { lat: 28.4595, lng: 77.0266 },
+            'Moradabad': { lat: 28.8386, lng: 78.7733 },
+            'Bareilly': { lat: 28.3670, lng: 79.4304 },
+            'Jalandhar': { lat: 31.3260, lng: 75.5762 },
+            'Warangal': { lat: 17.9689, lng: 79.5941 },
+            'Mangalore': { lat: 12.9141, lng: 74.8560 },
+            'Tirupati': { lat: 13.6288, lng: 79.4192 },
+            'Kurnool': { lat: 15.8281, lng: 78.0373 },
+            'Nellore': { lat: 14.4426, lng: 79.9865 },
+            'Belgaum': { lat: 15.8497, lng: 74.4977 },
+            'Ambala': { lat: 30.3782, lng: 76.7767 },
+            'Dehradun': { lat: 30.3165, lng: 78.0322 },
+            'Ujjain': { lat: 23.1793, lng: 75.7849 },
+            'Pondicherry': { lat: 11.9139, lng: 79.8145 },
+            'Andaman': { lat: 11.6670, lng: 92.7359 },
+            'Darjeeling': { lat: 27.0462, lng: 88.2687 },
+            'Mussoorie': { lat: 30.4591, lng: 78.0663 },
+            'Ooty': { lat: 11.4064, lng: 76.6932 },
+            'Kodaikanal': { lat: 10.2381, lng: 77.4892 },
+            'Munnar': { lat: 10.0889, lng: 77.0595 },
+            'Rishikesh': { lat: 30.0869, lng: 78.2676 },
+            'Haridwar': { lat: 29.9457, lng: 78.1642 },
+            'Pushkar': { lat: 26.4906, lng: 74.5551 },
+            'Mount Abu': { lat: 24.5924, lng: 72.7156 },
+            'Khajuraho': { lat: 24.8520, lng: 79.9274 },
+            'Hampi': { lat: 15.3350, lng: 76.4600 },
+            'Badami': { lat: 15.9129, lng: 75.6800 },
+            'Pattadakal': { lat: 15.9547, lng: 75.8160 },
+            'Auroville': { lat: 12.0061, lng: 79.8112 },
+            'Mahabalipuram': { lat: 12.6189, lng: 80.1939 },
+            'Thanjavur': { lat: 10.7867, lng: 79.1378 },
+            'Trichy': { lat: 10.8505, lng: 78.6997 },
+            'Rameswaram': { lat: 9.2876, lng: 79.3129 },
+            'Kanyakumari': { lat: 8.0883, lng: 77.5385 },
+            'Port Blair': { lat: 11.6670, lng: 92.7359 }
+        };
+
         function toggleHotelMap(btn, hotelId, lat, lng, name, city) {
             const mapDiv = document.getElementById(`map-${hotelId}`);
             if (mapDiv.style.display === 'block') {
@@ -495,29 +826,72 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             btn.classList.remove('btn-outline-info');
             btn.classList.add('btn-info');
 
+            // First check if we have coordinates
             if (lat && lng) {
                 renderSmallMap(mapDiv, lat, lng, name);
+                return;
+            }
+
+            // Show locating message
+            mapDiv.innerHTML = '<div class="p-4 text-center"><div class="spinner-border spinner-border-sm text-primary"></div><span class="ms-2 small text-muted">Locating hotel...</span></div>';
+
+            // Try to find city coordinates as fallback first
+            let fallbackCoords = null;
+            if (cityCoords[city]) {
+                fallbackCoords = cityCoords[city];
             } else {
-                // Use Geocoder if coordinates are missing
+                // Try partial match
+                for (const cityName in cityCoords) {
+                    if (city.toLowerCase().includes(cityName.toLowerCase()) || cityName.toLowerCase().includes(city.toLowerCase())) {
+                        fallbackCoords = cityCoords[cityName];
+                        break;
+                    }
+                }
+            }
+
+            // Try Google Maps Geocoder
+            try {
                 const geocoder = new google.maps.Geocoder();
-                mapDiv.innerHTML = '<div class="p-4 text-center"><div class="spinner-border spinner-border-sm text-primary"></div><span class="ms-2 small text-muted">Locating hotel...</span></div>';
-                
                 geocoder.geocode({ address: `${name}, ${city}` }, (results, status) => {
-                    if (status === 'OK') {
+                    if (status === 'OK' && results && results[0]) {
                         const newLat = results[0].geometry.location.lat();
                         const newLng = results[0].geometry.location.lng();
                         renderSmallMap(mapDiv, newLat, newLng, name);
                         
-                        // Optional: Send coordinates to server to update DB
+                        // Send coordinates to server to update DB
                         fetch('update_hotel_coords.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             body: `hotel_id=${hotelId}&lat=${newLat}&lng=${newLng}`
                         });
+                    } else if (fallbackCoords) {
+                        // Use fallback city coordinates
+                        renderSmallMap(mapDiv, fallbackCoords.lat, fallbackCoords.lng, name);
+                        
+                        // Also update DB with fallback coordinates
+                        fetch('update_hotel_coords.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: `hotel_id=${hotelId}&lat=${fallbackCoords.lat}&lng=${fallbackCoords.lng}`
+                        });
                     } else {
                         mapDiv.innerHTML = '<div class="p-4 text-center text-muted small">Could not find location for this hotel.</div>';
                     }
                 });
+            } catch (e) {
+                // If Google Maps API fails, use fallback coordinates
+                if (fallbackCoords) {
+                    renderSmallMap(mapDiv, fallbackCoords.lat, fallbackCoords.lng, name);
+                    
+                    // Update DB with fallback coordinates
+                    fetch('update_hotel_coords.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `hotel_id=${hotelId}&lat=${fallbackCoords.lat}&lng=${fallbackCoords.lng}`
+                    });
+                } else {
+                    mapDiv.innerHTML = '<div class="p-4 text-center text-muted small">Could not find location for this hotel.</div>';
+                }
             }
         }
 

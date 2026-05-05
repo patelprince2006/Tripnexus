@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../database/db.php';
+require_once __DIR__ . '/../database/db.php';
 
 if (!isset($_GET['id'])) {
     header('Location: search_tour.php');
@@ -80,7 +80,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_booking'])) {
         .navbar { background-color: #0d2137 !important; }
         .tour-hero {
             height: 400px;
-            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url('<?php echo !empty($tour['main_image']) ? htmlspecialchars($tour['main_image']) : 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80'; ?>');
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url('<?php 
+                $tour_images = [
+                    1 => '../photos/Agra.jpg',
+                    2 => '../photos/Manali.jpg',
+                    3 => '../photos/Goa.jpg',
+                    4 => '../photos/Manali2.jpg',
+                    5 => '../photos/Mumbai.jpg',
+                    6 => '../photos/Agra.jpg'
+                ];
+                $tour_id = $tour['id'];
+                echo isset($tour_images[$tour_id]) ? htmlspecialchars($tour_images[$tour_id]) : '../photos/Manali.jpg';
+            ?>');
             background-size: cover;
             background-position: center;
             display: flex;
@@ -197,19 +208,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_booking'])) {
                         <h4 class="fw-bold mb-4">Book Your Tour</h4>
                         <form method="POST">
                             <div class="mb-4">
-                                <label class="form-label small text-muted text-uppercase fw-bold">Select Fixed Departure Date</label>
+                                <label class="form-label small text-muted text-uppercase fw-bold">
+                                    <i class="bi bi-calendar-event me-1"></i>Travel Date
+                                </label>
                                 <?php if (count($schedules) > 0): ?>
-                                    <select name="tour_date" class="form-select border-2" required>
-                                        <?php foreach ($schedules as $s): ?>
-                                            <option value="<?php echo $s['start_date']; ?>" <?php echo ($tour_date == $s['start_date']) ? 'selected' : ''; ?>>
-                                                <?php echo date('d M Y', strtotime($s['start_date'])); ?> 
-                                                (<?php echo $s['available_seats']; ?> seats left)
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                    <div class="mb-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="useCustomDate">
+                                            <label class="form-check-label small text-muted" for="useCustomDate">
+                                                Use custom date instead of fixed departure
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div id="fixedDepartureSection">
+                                        <select name="tour_date" id="fixedTourDate" class="form-select border-2" required>
+                                            <?php foreach ($schedules as $s): ?>
+                                                <option value="<?php echo $s['start_date']; ?>" <?php echo ($tour_date == $s['start_date']) ? 'selected' : ''; ?>>
+                                                    <?php echo date('d M Y', strtotime($s['start_date'])); ?> 
+                                                    (<?php echo $s['available_seats']; ?> seats left)
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div id="customDateSection" style="display: none;">
+                                        <input type="date" name="tour_date" id="customTourDate" class="form-control border-2" 
+                                               value="<?php echo $tour_date; ?>" min="<?php echo date('Y-m-d'); ?>" required>
+                                        <div class="small text-muted mt-1">
+                                            <i class="bi bi-info-circle me-1"></i>Custom dates may require confirmation
+                                        </div>
+                                    </div>
                                 <?php else: ?>
-                                    <div class="alert alert-warning small mb-0">No upcoming fixed departures. Please contact support.</div>
-                                    <input type="hidden" name="tour_date" value="<?php echo $tour_date; ?>">
+                                    <div class="alert alert-info small mb-2">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        No fixed departures available, but you can select any custom date!
+                                    </div>
+                                    <input type="date" name="tour_date" class="form-control border-2" 
+                                           value="<?php echo $tour_date; ?>" min="<?php echo date('Y-m-d'); ?>" required>
                                 <?php endif; ?>
                             </div>
                             <div class="mb-4">
@@ -235,7 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_booking'])) {
                                 <div class="alert alert-danger small mb-3"><?php echo $error; ?></div>
                             <?php endif; ?>
 
-                            <button type="submit" name="confirm_booking" class="btn btn-success w-100 py-3 rounded-pill fw-bold fs-5 shadow-sm" <?php echo count($schedules) == 0 ? 'disabled' : ''; ?>>
+                            <button type="submit" name="confirm_booking" class="btn btn-success w-100 py-3 rounded-pill fw-bold fs-5 shadow-sm">
                                 Confirm & Book Now
                             </button>
                             <p class="text-center text-muted small mt-3">No hidden charges. Secure payment.</p>
@@ -263,6 +297,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_booking'])) {
             const total = basePrice * pax;
             totalPriceDisplay.innerText = '₹' + total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
         });
+
+        const useCustomDateCheckbox = document.getElementById('useCustomDate');
+        if (useCustomDateCheckbox) {
+            const fixedSection = document.getElementById('fixedDepartureSection');
+            const customSection = document.getElementById('customDateSection');
+            const fixedDateInput = document.getElementById('fixedTourDate');
+            const customDateInput = document.getElementById('customTourDate');
+
+            useCustomDateCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    fixedSection.style.display = 'none';
+                    customSection.style.display = 'block';
+                    fixedDateInput.removeAttribute('required');
+                    customDateInput.setAttribute('required', 'required');
+                } else {
+                    fixedSection.style.display = 'block';
+                    customSection.style.display = 'none';
+                    customDateInput.removeAttribute('required');
+                    fixedDateInput.setAttribute('required', 'required');
+                }
+            });
+        }
     </script>
 </body>
 

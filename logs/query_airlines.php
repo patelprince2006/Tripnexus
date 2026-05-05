@@ -1,6 +1,6 @@
 <?php
 // query_airlines.php — queries `airlines` table and prints JSON
-require __DIR__ . '/db.php';
+require __DIR__ . '/../database/db.php';
 
 header('Content-Type: application/json');
 

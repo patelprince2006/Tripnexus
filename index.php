@@ -68,6 +68,7 @@ if ($popular_tours_res) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
     <link rel="stylesheet" href="public/style.css">
+    <link rel="stylesheet" href="chatbot/chatbot.css">
 
     <style>
         /* LOGIN PAGE ONLY */
@@ -503,11 +504,23 @@ if ($popular_tours_res) {
             <a href="tours/search_tour.php" class="btn btn-outline-success rounded-pill px-4">View All Tours</a>
         </div>
         <div class="row g-4">
-            <?php foreach ($popular_tours as $tour): ?>
+            <?php 
+            $tour_images = [
+                1 => 'photos/Agra.jpg',
+                2 => 'photos/Manali.jpg',
+                3 => 'photos/Goa.jpg',
+                4 => 'photos/Manali2.jpg',
+                5 => 'photos/Mumbai.jpg',
+                6 => 'photos/Agra.jpg'
+            ];
+            foreach ($popular_tours as $index => $tour): 
+                $tour_id = $tour['id'];
+                $image_url = isset($tour_images[$tour_id]) ? $tour_images[$tour_id] : 'photos/Manali.jpg';
+            ?>
                 <div class="col-12 col-md-6 col-lg-3">
                     <div class="card h-100 shadow-sm border-0 tour-card overflow-hidden">
                         <div class="position-relative">
-                            <img src="<?php echo !empty($tour['main_image']) ? htmlspecialchars($tour['main_image']) : 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=500&q=80'; ?>" class="card-img-top" alt="<?php echo htmlspecialchars($tour['name']); ?>" style="height: 200px; object-fit: cover;">
+                            <img src="<?php echo htmlspecialchars($image_url); ?>" class="card-img-top" alt="<?php echo htmlspecialchars($tour['name']); ?>" style="height: 200px; object-fit: cover;">
                             <div class="position-absolute top-0 end-0 m-3">
                                 <span class="badge bg-white text-dark shadow-sm rounded-pill px-3 py-2">
                                     <i class="bi bi-clock me-1 text-success"></i> <?php echo htmlspecialchars($tour['duration']); ?> Days
@@ -624,6 +637,7 @@ if ($popular_tours_res) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="public/script.js"></script>
+    <script src="chatbot/chatbot.js"></script>
     <script>
         function swapTrainLocations() {
             const from = document.getElementById('trainFrom');

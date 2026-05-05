@@ -1,5 +1,5 @@
 <?php
-include '../database/db.php';
+require_once __DIR__ . '/../database/db.php';
 include 'auth_check.php';
 
 // Defensive check: Try to see if total_amount exists
