@@ -285,7 +285,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                          WHERE city IN ($placeholders)
                          ORDER BY rating DESC LIMIT 6";
             $rec_res = db_query($conn, $rec_query, $pref_cities);
-            if ($rec_res && mysqli_num_rows($rec_res) > 0) {
+            if ($rec_res && db_num_rows($rec_res) > 0) {
                 while ($row = db_fetch_assoc($rec_res)) {
                     $results[] = $row;
                 }
@@ -297,7 +297,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($results)) {
         // Fallback: Show top-rated hotels across all cities
         $featured_res = db_query($conn, "SELECT * FROM hotels ORDER BY rating DESC LIMIT 6");
-        if ($featured_res) {
+        if ($featured_res && db_num_rows($featured_res) > 0) {
             while ($row = db_fetch_assoc($featured_res)) {
                 $results[] = $row;
             }

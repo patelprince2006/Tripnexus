@@ -200,6 +200,29 @@ if (defined('DB_CONNECTED') && DB_CONNECTED) {
     </nav>
 
     <div class="container">
+        <!-- Success/Error Messages -->
+        <?php if (isset($_GET['success'])): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <?php if ($_GET['success'] === 'cancelled'): ?>
+                    Booking cancelled successfully!
+                <?php endif; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+        <?php if (isset($_GET['error'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <?php 
+                $errors = [
+                    'missing_booking_id' => 'Missing booking ID.',
+                    'booking_not_found' => 'Booking not found.',
+                    'already_cancelled' => 'Booking is already cancelled.',
+                    'cancellation_failed' => 'Cancellation failed. Please try again.'
+                ];
+                echo $errors[$_GET['error']] ?? 'An error occurred.';
+                ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
         <!-- Page Header -->
         <div class="row mb-4">
             <div class="col-12">
@@ -352,6 +375,14 @@ if (defined('DB_CONNECTED') && DB_CONNECTED) {
                                                 <div class="fw-bold mb-1">₹<?php echo number_format((float)$booking['total_amount'], 2); ?></div>
                                                 <span class="status-badge <?php echo $status_class; ?>"><?php echo htmlspecialchars(ucfirst($status)); ?></span>
                                                 <div class="text-muted small mt-1">Booked: <?php echo htmlspecialchars($booked_on); ?></div>
+                                                <?php if ($status === 'confirmed' || $status === 'pending'): ?>
+                                                    <form method="POST" action="cancel_booking.php" class="mt-2" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                                                        <input type="hidden" name="booking_id" value="<?php echo $booking['id']; ?>">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            <i class="bi bi-x-circle me-1"></i>Cancel
+                                                        </button>
+                                                    </form>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
                                     </div>
