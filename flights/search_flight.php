@@ -183,7 +183,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                          AND (f.departure_airport IN ($placeholders) OR f.arrival_airport IN ($placeholders))
                          ORDER BY f.departure_time ASC LIMIT 10";
             $rec_res = db_query($conn, $rec_query, array_merge($pref_cities, $pref_cities));
-            if ($rec_res && db_num_rows($rec_res) > 0) {
+            if ($rec_res && mysqli_num_rows($rec_res) > 0) {
                 while ($row = db_fetch_assoc($rec_res)) {
                     $row['rating'] = rand(35, 50) / 10;
                     $results[] = $row;

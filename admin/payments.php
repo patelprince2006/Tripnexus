@@ -2,6 +2,14 @@
 require_once __DIR__ . '/../database/db.php';
 include 'auth_check.php';
 
+// Handle Payment Status Updates
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'update_payment_status') {
+    $pay_id = intval($_POST['payment_id']);
+    $pay_status = $_POST['payment_status'];
+    db_query($conn, "UPDATE payments SET payment_status = ? WHERE id = ?", array($pay_status, $pay_id));
+    $msg = "Payment status updated to " . ucfirst($pay_status);
+}
+
 // Fetch Payments
 $query = "
     SELECT p.*, u.fullname, b.booking_type 
@@ -31,6 +39,7 @@ include 'includes/sidebar.php';
                     <th>Amount</th>
                     <th>Date</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -54,6 +63,18 @@ include 'includes/sidebar.php';
                         };
                         echo "<span class='badge $badgeClass'>" . ucfirst($status) . "</span>";
                         ?>
+                    </td>
+                    <td>
+                        <form method="POST" class="d-inline">
+                            <input type="hidden" name="payment_id" value="<?php echo $row['id']; ?>">
+                            <input type="hidden" name="action" value="update_payment_status">
+                            <select name="payment_status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+                                <option value="success" <?php echo $status === 'success' ? 'selected' : ''; ?>>Success</option>
+                                <option value="pending" <?php echo $status === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                <option value="failed" <?php echo $status === 'failed' ? 'selected' : ''; ?>>Failed</option>
+                                <option value="refunded" <?php echo $status === 'refunded' ? 'selected' : ''; ?>>Refunded</option>
+                            </select>
+                        </form>
                     </td>
                 </tr>
                 <?php endwhile; ?>

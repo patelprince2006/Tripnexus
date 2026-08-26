@@ -177,9 +177,12 @@ if ($unreadQuery) {
                                                 <p class="text-muted small mb-1"><?php echo htmlspecialchars($notif['message']); ?></p>
                                                 <small class="text-muted"><?php echo date('M d, H:i', strtotime($notif['created_at'])); ?></small>
                                             </div>
-                                            <?php if (!$notif['is_read']): ?>
-                                                <span class="badge bg-primary">NEW</span>
-                                            <?php endif; ?>
+                                             <?php if (empty($notif['is_read']) || $notif['is_read'] === 'false' || $notif['is_read'] == 0): ?>
+                                                 <div class="d-flex align-items-center gap-2">
+                                                     <span class="badge bg-primary">NEW</span>
+                                                     <a href="mark_notification_read.php?id=<?php echo $notif['id']; ?>" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;">Mark Read</a>
+                                                 </div>
+                                             <?php endif; ?>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>

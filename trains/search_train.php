@@ -249,7 +249,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                          AND (from_station IN ($placeholders) OR to_station IN ($placeholders))
                          ORDER BY departure_time ASC LIMIT 10";
             $rec_res = db_query($conn, $rec_query, array_merge($pref_stations, $pref_stations));
-            if ($rec_res && db_num_rows($rec_res) > 0) {
+            if ($rec_res && mysqli_num_rows($rec_res) > 0) {
                 while ($row = db_fetch_assoc($rec_res)) {
                     $results[] = $row;
                 }

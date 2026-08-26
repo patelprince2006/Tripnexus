@@ -11,10 +11,12 @@ function get_count($conn, $query, $key = 'c') {
 
 // Fetch Statistics safely
 $users_count = get_count($conn, "SELECT COUNT(*) as c FROM users");
-$overall_bookings = get_count($conn, "SELECT COUNT(*) as c FROM bookings");
-$flights_count = get_count($conn, "SELECT COUNT(*) as c FROM flights");
-$tours_count = get_count($conn, "SELECT COUNT(*) as c FROM tour_packages");
+$bookings_count = get_count($conn, "SELECT COUNT(*) as c FROM bookings");
+$revenue = get_count($conn, "SELECT SUM(amount) as s FROM payments WHERE payment_status = 'success'", 's');
 $hotels_count = get_count($conn, "SELECT COUNT(*) as c FROM hotels");
+$trains_count = get_count($conn, "SELECT COUNT(*) as c FROM trains");
+$flights_count = get_count($conn, "SELECT COUNT(*) as c FROM flights");
+$buses_count = get_count($conn, "SELECT COUNT(*) as c FROM buses");
 
 $active_page = 'dashboard';
 include 'includes/header.php';
@@ -26,7 +28,7 @@ include 'includes/sidebar.php';
     
     <div class="row g-4 mb-4">
         <!-- Card 1: Users -->
-        <div class="col-md-2">
+        <div class="col-md-3">
             <div class="card p-3 card-stat bg-primary text-white">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -40,13 +42,13 @@ include 'includes/sidebar.php';
             </div>
         </div>
 
-        <!-- Card 2: Overall Bookings -->
-        <div class="col-md-2">
+        <!-- Card 2: Bookings -->
+        <div class="col-md-3">
             <div class="card p-3 card-stat bg-success text-white">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-uppercase mb-1">Overall Bookings</h6>
-                        <h3 class="mb-0"><?php echo $overall_bookings; ?></h3>
+                        <h6 class="text-uppercase mb-1">Total Bookings</h6>
+                        <h3 class="mb-0"><?php echo $bookings_count; ?></h3>
                     </div>
                     <div class="stat-icon">
                         <i class="fas fa-calendar-check"></i>
@@ -55,39 +57,24 @@ include 'includes/sidebar.php';
             </div>
         </div>
 
-        <!-- Card 3: Total Flights -->
-        <div class="col-md-2">
-            <div class="card p-3 card-stat bg-danger text-white">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-uppercase mb-1">Total Flights</h6>
-                        <h3 class="mb-0"><?php echo $flights_count; ?></h3>
-                    </div>
-                    <div class="stat-icon">
-                        <i class="fas fa-plane"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Card 4: Total Tours -->
-        <div class="col-md-2">
+        <!-- Card 3: Revenue -->
+        <div class="col-md-3">
             <div class="card p-3 card-stat bg-warning text-dark">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-uppercase mb-1">Total Tours</h6>
-                        <h3 class="mb-0"><?php echo $tours_count; ?></h3>
+                        <h6 class="text-uppercase mb-1">Total Revenue</h6>
+                        <h3 class="mb-0">₹<?php echo number_format($revenue, 2); ?></h3>
                     </div>
                     <div class="stat-icon">
-                        <i class="fas fa-globe-americas"></i>
+                        <i class="fas fa-rupee-sign"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Card 5: Total Hotels -->
-        <div class="col-md-2">
-            <div class="card p-3 card-stat bg-secondary text-white">
+        <!-- Card 4: Hotels -->
+        <div class="col-md-3">
+            <div class="card p-3 card-stat bg-danger text-white">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-uppercase mb-1">Total Hotels</h6>
