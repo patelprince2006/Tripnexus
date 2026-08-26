@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: tripnexus
+    env: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DB_DRIVER
+        value: supabase_api
+      - key: SUPABASE_URL
+        value: https://jtsuchakskithnoohjup.supabase.co
