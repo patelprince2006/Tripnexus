@@ -580,11 +580,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         </div>
                         <div class="card-body p-4">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="fw-bold mb-0"><?php echo htmlspecialchars($hotel['name']); ?></h5>
-                                <span class="badge bg-warning text-dark rounded-pill px-2 py-1" style="font-size: 0.75rem;"><i class="bi bi-star-fill me-1"></i><?php echo htmlspecialchars($hotel['rating']); ?></span>
+                                <h5 class="fw-bold mb-0"><?php echo htmlspecialchars($hotel['name'] ?? ''); ?></h5>
+                                <span class="badge bg-warning text-dark rounded-pill px-2 py-1" style="font-size: 0.75rem;"><i class="bi bi-star-fill me-1"></i><?php echo htmlspecialchars($hotel['rating'] ?? ''); ?></span>
                             </div>
-                            <p class="text-muted small mb-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i><?php echo htmlspecialchars($hotel['address']); ?>, <?php echo htmlspecialchars($hotel['city']); ?></p>
-                            <p class="small text-secondary mb-4"><?php echo htmlspecialchars($hotel['amenities']); ?></p>
+                            <p class="text-muted small mb-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i><?php echo htmlspecialchars($hotel['address'] ?? ''); ?>, <?php echo htmlspecialchars($hotel['city'] ?? ''); ?></p>
+                            <p class="small text-secondary mb-4"><?php echo htmlspecialchars($hotel['amenities'] ?? ''); ?></p>
                             
                             <!-- Individual Hotel Map -->
                             <div id="map-<?php echo $hotel['hotel_id']; ?>" class="hotel-map-small border shadow-sm"></div>
@@ -592,22 +592,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="d-flex justify-content-between align-items-center pt-3 border-top">
                                 <div>
                                     <div class="text-muted" style="font-size: 0.7rem;">Price per night</div>
-                                    <h4 class="fw-bold mb-0 text-dark">₹<?php echo number_format($hotel['price_per_night'], 0); ?></h4>
+                                    <h4 class="fw-bold mb-0 text-dark">₹<?php echo number_format($hotel['price_per_night'] ?? 0, 0); ?></h4>
                                 </div>
                                 <div class="d-flex gap-2">
                                     <?php $is_fav = in_array((int)$hotel['hotel_id'], $user_wishlist); ?>
-                                    <button class="btn <?php echo $is_fav ? 'btn-danger' : 'btn-outline-secondary'; ?> btn-sm px-3 rounded-pill" onclick="toggleWishlist(this, 'hotel', <?php echo $hotel['hotel_id']; ?>, '<?php echo htmlspecialchars($hotel['name'], ENT_QUOTES); ?>')">
+                                    <button class="btn <?php echo $is_fav ? 'btn-danger' : 'btn-outline-secondary'; ?> btn-sm px-3 rounded-pill" onclick="toggleWishlist(this, 'hotel', <?php echo $hotel['hotel_id']; ?>, '<?php echo htmlspecialchars($hotel['name'] ?? '', ENT_QUOTES); ?>')">
                                         <i class="bi <?php echo $is_fav ? 'bi-heart-fill' : 'bi-heart'; ?>"></i>
                                     </button>
-                                    <button class="btn btn-outline-info btn-sm px-3 rounded-pill" onclick="toggleHotelMap(this, <?php echo $hotel['hotel_id']; ?>, <?php echo $hotel['latitude'] ?? 'null'; ?>, <?php echo $hotel['longitude'] ?? 'null'; ?>, '<?php echo addslashes($hotel['name']); ?>', '<?php echo addslashes($hotel['city']); ?>')">
+                                    <button class="btn btn-outline-info btn-sm px-3 rounded-pill" onclick="toggleHotelMap(this, <?php echo $hotel['hotel_id']; ?>, <?php echo $hotel['latitude'] ?? 'null'; ?>, <?php echo $hotel['longitude'] ?? 'null'; ?>, '<?php echo addslashes($hotel['name'] ?? ''); ?>', '<?php echo addslashes($hotel['city'] ?? ''); ?>')">
                                         <i class="bi bi-geo-alt"></i>
                                     </button>
                                     <form action="../flights/booking.php" method="POST">
                                         <input type="hidden" name="service_type" value="hotel">
                                         <input type="hidden" name="reference_id" value="<?php echo $hotel['hotel_id']; ?>">
-                                        <input type="hidden" name="amount" value="<?php echo $hotel['price_per_night']; ?>">
-                                        <input type="hidden" name="travel_date" value="<?php echo htmlspecialchars($check_in); ?>">
-                                        <input type="hidden" name="item_name" value="<?php echo htmlspecialchars($hotel['name']); ?>">
+                                        <input type="hidden" name="amount" value="<?php echo $hotel['price_per_night'] ?? 0; ?>">
+                                        <input type="hidden" name="travel_date" value="<?php echo htmlspecialchars($check_in ?? ''); ?>">
+                                        <input type="hidden" name="item_name" value="<?php echo htmlspecialchars($hotel['name'] ?? ''); ?>">
                                         <button type="submit" class="btn btn-dark fw-bold px-4 rounded-pill">Book</button>
                                     </form>
                                 </div>
