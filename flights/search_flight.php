@@ -64,7 +64,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $airline = db_fetch_assoc($airline_res);
             if (!$airline) {
                 db_query($conn, "INSERT INTO airlines (airline_name, airline_logo) VALUES (?, ?)", [$airline_name, '../photos/indigo.jpg']);
-                $airline_id = mysqli_insert_id($conn);
+                $airline_id = db_insert_id($conn);
+                if (!$airline_id) {
+                    $airline_id = db_fetch_value(db_query($conn, "SELECT MAX(airline_id) FROM airlines"), 0, 0) ?: 1;
+                }
             } else {
                 $airline_id = $airline['airline_id'];
             }
@@ -76,7 +79,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $base_price = rand(4500, 15000); 
                 db_query($conn, "INSERT INTO flights (flight_number, airline_id, departure_airport, arrival_airport, departure_time, arrival_time, base_price, available_seats, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
                     [$f_num, $airline_id, $from, $to, $dep_time, $arr_time, $base_price, rand(30, 120), 'scheduled']);
-                $flight_id = mysqli_insert_id($conn);
+                $flight_id = db_insert_id($conn);
+                if (!$flight_id) {
+                    $flight_id = db_fetch_value(db_query($conn, "SELECT MAX(flight_id) FROM flights"), 0, 0) ?: 1;
+                }
             } else {
                 $flight_id = $flight['flight_id'];
             }

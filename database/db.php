@@ -333,6 +333,20 @@ function db_affected_rows($conn) {
     return 0;
 }
 
+function db_insert_id($conn = null) {
+    global $pdo;
+    if ($pdo !== null) {
+        try {
+            $id = $pdo->lastInsertId();
+            if ($id && (int)$id > 0) return (int)$id;
+        } catch (Exception $e) {}
+    }
+    if ($conn && is_object($conn) && is_a($conn, 'mysqli')) {
+        return (int)mysqli_insert_id($conn);
+    }
+    return 0;
+}
+
 function db_last_error($conn) {
     global $pdo;
     if ($pdo !== null) {

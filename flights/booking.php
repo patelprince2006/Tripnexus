@@ -38,7 +38,10 @@ if (!$res) {
     exit;
 }
 
-$booking_id = mysqli_insert_id($conn);
+$booking_id = db_insert_id($conn);
+if (!$booking_id) {
+    $booking_id = db_fetch_value(db_query($conn, "SELECT MAX(id) FROM bookings"), 0, 0);
+}
 
 header("Location: checkout.php?booking_id={$booking_id}");
 exit;

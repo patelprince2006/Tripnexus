@@ -54,7 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $airline = db_fetch_assoc($airline_res);
                 if (!$airline) {
                     db_query($conn, "INSERT INTO airlines (airline_name, airline_logo) VALUES (?, ?)", [$airline_name, '../photos/indigo.jpg']);
-                    $airline_id = mysqli_insert_id($conn);
+                    $airline_id = db_insert_id($conn);
+                    if (!$airline_id) {
+                        $airline_id = db_fetch_value(db_query($conn, "SELECT MAX(airline_id) FROM airlines"), 0, 0) ?: 1;
+                    }
                 } else {
                     $airline_id = $airline['airline_id'];
                 }

@@ -57,7 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_booking'])) {
     $res = db_query($conn, $insert_query, [$user_id, $booking_type, $reference_id, $total_amount, $tour_date, $passengers, $status]);
 
     if ($res) {
-        $booking_id = mysqli_insert_id($conn);
+        $booking_id = db_insert_id($conn);
+        if (!$booking_id) {
+            $booking_id = db_fetch_value(db_query($conn, "SELECT MAX(id) FROM bookings"), 0, 0);
+        }
         header("Location: ../flights/checkout.php?booking_id=$booking_id");
         exit;
     } else {

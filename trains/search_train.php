@@ -154,7 +154,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $price = rand(450, 3200);
                         db_query($conn, "INSERT INTO trains (train_name, train_number, from_station, to_station, departure_time, arrival_time, price, available_seats) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
                             [$t_name, $t_num, $src, $dest, $dep_time, $arr_time, $price, rand(15, 120)]);
-                        $train_id = mysqli_insert_id($conn);
+                        $train_id = db_insert_id($conn);
+                        if (!$train_id) {
+                            $train_id = db_fetch_value(db_query($conn, "SELECT MAX(train_id) FROM trains"), 0, 0) ?: 1;
+                        }
                     } else {
                         $train_id = $train_row['train_id'];
                         db_query($conn, "UPDATE trains SET train_name = ?, from_station = ?, to_station = ?, arrival_time = ? WHERE train_id = ?", 
