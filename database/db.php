@@ -70,6 +70,104 @@ if ($conn) {
     }
 }
 
+// 3. Embedded SQLite Fallback if neither Supabase PDO nor MySQL is connected
+if ($pdo === null && !$conn) {
+    try {
+        $sqlite_file = __DIR__ . '/tripnexus_fallback.sqlite';
+        $needs_init = !file_exists($sqlite_file);
+        $pdo = new PDO("sqlite:" . $sqlite_file, null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+        if ($needs_init) {
+            // 1. DDL Schema from database/tripnexus_database.sql
+            $sql_file = __DIR__ . '/tripnexus_database.sql';
+            if (file_exists($sql_file)) {
+                $sql = file_get_contents($sql_file);
+                $sql = preg_replace('/CREATE DATABASE.*?;/is', '', $sql);
+                $sql = preg_replace('/USE `.*?`;/is', '', $sql);
+                $sql = preg_replace('/ON UPDATE CURRENT_TIMESTAMP/i', '', $sql);
+                $sql = preg_replace('/ENUM\([^)]+\)/i', 'TEXT', $sql);
+                $sql = preg_replace('/CONSTRAINT `[^`]+` CHECK/i', 'CHECK', $sql);
+                $sql = str_replace('INSERT IGNORE INTO', 'INSERT OR IGNORE INTO', $sql);
+                $sql = str_replace('ENGINE=InnoDB', '', $sql);
+                $sql = str_replace('INT AUTO_INCREMENT PRIMARY KEY', 'INTEGER PRIMARY KEY', $sql);
+                $sql = str_replace('AUTO_INCREMENT', '', $sql);
+
+                $stmts = explode(';', $sql);
+                foreach ($stmts as $s) {
+                    $lines = explode("\n", $s);
+                    $clean_lines = [];
+                    foreach ($lines as $line) {
+                        $trimmed = trim($line);
+                        if (strpos($trimmed, '--') === 0) continue;
+                        $clean_lines[] = $line;
+                    }
+                    $s = trim(implode("\n", $clean_lines));
+                    if (!empty($s)) {
+                        try { $pdo->exec($s); } catch (Exception $e) {}
+                    }
+                }
+            }
+
+            // 2. Migration DDLs
+            $mig_dir = __DIR__ . '/../migrations';
+            if (is_dir($mig_dir)) {
+                $mig_files = glob($mig_dir . '/*.sql');
+                sort($mig_files);
+                foreach ($mig_files as $mf) {
+                    $msql = file_get_contents($mf);
+                    $msql = preg_replace('/ON UPDATE CURRENT_TIMESTAMP/i', '', $msql);
+                    $msql = preg_replace('/ENUM\([^)]+\)/i', 'TEXT', $msql);
+                    $msql = str_replace(['INT AUTO_INCREMENT PRIMARY KEY', 'AUTO_INCREMENT', 'ENGINE=InnoDB'], ['INTEGER PRIMARY KEY', '', ''], $msql);
+                    $mstmts = explode(';', $msql);
+                    foreach ($mstmts as $ms) {
+                        $lines = explode("\n", $ms);
+                        $clean_lines = [];
+                        foreach ($lines as $line) {
+                            $trimmed = trim($line);
+                            if (strpos($trimmed, '--') === 0) continue;
+                            $clean_lines[] = $line;
+                        }
+                        $ms = trim(implode("\n", $clean_lines));
+                        if (!empty($ms)) {
+                            try { $pdo->exec($ms); } catch (Exception $e) {}
+                        }
+                    }
+                }
+            }
+
+            // 3. Seed data from supabase/seed_data.sql
+            $seed_file = __DIR__ . '/../supabase/seed_data.sql';
+            if (file_exists($seed_file)) {
+                $seed_sql = file_get_contents($seed_file);
+                $seed_sql = str_replace('INSERT INTO public."', 'INSERT OR IGNORE INTO "', $seed_sql);
+                $seed_sql = preg_replace('/ON CONFLICT\s*\([^)]+\)\s*DO NOTHING/i', '', $seed_sql);
+                $seed_sql = preg_replace('/\btrue\b/i', '1', $seed_sql);
+                $seed_sql = preg_replace('/\bfalse\b/i', '0', $seed_sql);
+                $seed_sql = str_replace(['BEGIN;', 'COMMIT;'], ['', ''], $seed_sql);
+
+                $sstmts = explode(';', $seed_sql);
+                foreach ($sstmts as $ss) {
+                    $lines = explode("\n", $ss);
+                    $clean_lines = [];
+                    foreach ($lines as $line) {
+                        $trimmed = trim($line);
+                        if (strpos($trimmed, '--') === 0) continue;
+                        $clean_lines[] = $line;
+                    }
+                    $ss = trim(implode("\n", $clean_lines));
+                    if (!empty($ss)) {
+                        try { $pdo->exec($ss); } catch (Exception $e) {}
+                    }
+                }
+            }
+        }
+    } catch (Exception $e) {
+        error_log("SQLite fallback init error: " . $e->getMessage());
+    }
+}
+
 $DB_CONNECTED = true;
 if (!defined('DB_CONNECTED')) {
     define('DB_CONNECTED', true);
@@ -101,16 +199,18 @@ function db_execute($conn, $stmt_name, $params = array()) {
 function db_query($conn, $query, $params = null) {
     global $pdo;
 
-    // Use Supabase PDO if active
+    // Use PDO if active (Supabase PDO or SQLite Fallback)
     if ($pdo !== null) {
         try {
-            // Convert MySQL backtick identifier syntax to PostgreSQL quotes
+            // Convert MySQL backtick identifier syntax to quotes & date functions
             $pg_query = str_replace('`', '"', $query);
+            $pg_query = str_replace(['NOW()', 'CURDATE()'], ["datetime('now', 'localtime')", "date('now', 'localtime')"], $pg_query);
             $stmt = $pdo->prepare($pg_query);
             $stmt->execute($params ?? []);
+            $GLOBALS['db_last_affected_rows'] = $stmt->rowCount();
             return new SupabaseResultWrapper($stmt);
         } catch (PDOException $e) {
-            error_log("Supabase PDO Query Error: " . $e->getMessage());
+            error_log("PDO Query Error: " . $e->getMessage());
             return false;
         }
     }
