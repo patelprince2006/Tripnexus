@@ -10,6 +10,20 @@ if ($airport_res) {
         $airports[] = $ap;
     }
 }
+if (empty($airports)) {
+    $airports = [
+        ['airport_code' => 'BLR', 'city' => 'Bangalore'],
+        ['airport_code' => 'MAA', 'city' => 'Chennai'],
+        ['airport_code' => 'DEL', 'city' => 'Delhi'],
+        ['airport_code' => 'GOI', 'city' => 'Goa'],
+        ['airport_code' => 'HYD', 'city' => 'Hyderabad'],
+        ['airport_code' => 'JAI', 'city' => 'Jaipur'],
+        ['airport_code' => 'COK', 'city' => 'Kochi'],
+        ['airport_code' => 'CCU', 'city' => 'Kolkata'],
+        ['airport_code' => 'BOM', 'city' => 'Mumbai'],
+        ['airport_code' => 'PNQ', 'city' => 'Pune']
+    ];
+}
 
 // Prepare bus locations
 $bus_locations = [];
@@ -18,6 +32,9 @@ if ($bus_loc_res) {
     while ($loc = db_fetch_assoc($bus_loc_res)) {
         $bus_locations[] = $loc['loc'];
     }
+}
+if (empty($bus_locations)) {
+    $bus_locations = ['Ahmedabad', 'Bangalore', 'Chennai', 'Delhi', 'Goa', 'Hyderabad', 'Jaipur', 'Mumbai', 'Pune', 'Surat'];
 }
 
 // Prepare train stations
@@ -28,6 +45,9 @@ if ($train_st_res) {
         $train_stations[] = $st['st'];
     }
 }
+if (empty($train_stations)) {
+    $train_stations = ['Ahmedabad Junction', 'Bangalore City', 'Chennai Central', 'Howrah Junction', 'Mumbai Central', 'New Delhi', 'Pune Junction', 'Surat'];
+}
 
 // Prepare hotel cities
 $hotel_cities = [];
@@ -37,6 +57,9 @@ if ($hotel_city_res) {
         $hotel_cities[] = $hc['city'];
     }
 }
+if (empty($hotel_cities)) {
+    $hotel_cities = ['Agra', 'Bangalore', 'Delhi', 'Goa', 'Jaipur', 'Manali', 'Mumbai', 'Shimla', 'Udaipur'];
+}
 
 // Prepare tour locations
 $tour_locations = [];
@@ -45,6 +68,9 @@ if ($tour_loc_res) {
     while ($tl = db_fetch_assoc($tour_loc_res)) {
         $tour_locations[] = $tl['location'];
     }
+}
+if (empty($tour_locations)) {
+    $tour_locations = ['Agra', 'Goa', 'Himachal Pradesh', 'Kerala', 'Rajasthan', 'Varanasi'];
 }
 
 // Fetch popular tours
